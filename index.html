@@ -4,11 +4,11 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="theme-color" content="#111111">
-  <title>Trevor Lin — Hardware & Software</title>
-  <meta name="description" content="Trevor Lin is a computer engineering student at Northwestern, exploring physical computing and useful software. Selected work: CryptScan and Codex Usage Status.">
+  <title>Trevor Lin — Exploring Robotics</title>
+  <meta name="description" content="Trevor Lin is a computer engineering student at Northwestern, passionate about robotics and exploring how sensing, hardware and software work together.">
   <link rel="canonical" href="https://trevorlt.github.io/">
-  <meta property="og:title" content="Trevor Lin — Hardware & Software">
-  <meta property="og:description" content="Making sense of things. A portfolio of physical computing and useful software.">
+  <meta property="og:title" content="Trevor Lin — Exploring Robotics">
+  <meta property="og:description" content="Exploring robotics through sensing, physical computing and useful software.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://trevorlt.github.io/">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -26,12 +26,12 @@
 <main>
   <section class="hero" id="home" aria-labelledby="name">
     <div class="hero-title"><h1 id="name"><span>Trevor</span><span>Lin</span></h1></div>
-    <div class="hero-copy"><p>Computer engineering at Northwestern.<br>Exploring hardware and useful software.</p><a class="button" href="#work">Explore my work <span aria-hidden="true">↗</span></a></div>
-    <div class="hero-foot"><span>Two ways of making things.</span><span>One curious mind.</span></div>
+    <div class="hero-copy"><p>Passionate about exploring robotics.<br>Computer engineering at Northwestern.</p><a class="button" href="#work">Explore my work <span aria-hidden="true">↗</span></a></div>
+    <div class="hero-foot"><span>Computer engineering student.</span><span>Learning by building.</span></div>
   </section>
 
   <section class="work section" id="work" aria-labelledby="work-title">
-    <div class="section-intro"><h2 id="work-title">Selected work</h2><p>A physical system. A small piece of software.<br>Different tools, the same attention to how things work.</p></div>
+    <div class="section-intro"><h2 id="work-title">Selected work</h2><p>Exploring how machines sense the world.<br>Making software that’s clearer to use.</p></div>
     <div class="project-index" aria-label="Project index"><a href="#cryptscan">CryptScan <span>Hardware</span></a><a href="#codex">Codex Usage Status <span>Software</span></a></div>
 
     <article class="project scanner-project" id="cryptscan" aria-labelledby="scanner-title">
@@ -52,13 +52,36 @@
     </article>
 
     <article class="project codex-project" id="codex" aria-labelledby="codex-title">
-      <div class="codex-media">
-        <div class="menu-study"><img class="app-icon" src="assets/codex-icon.png" width="256" height="256" alt="Codex Usage Status app icon" loading="lazy"><img src="assets/codex-menu.png" width="212" height="66" alt="Codex Usage Status menu bar showing the 5-hour and 7-day quota rings" loading="lazy"><p>A glance, without breaking focus.</p></div>
-        <figure class="installer"><img src="assets/codex-installer.png" width="960" height="600" alt="Codex Usage Status drag-to-install Finder background" loading="lazy"><figcaption>Release packaging for macOS. <a href="https://github.com/TrevorLt/codex-usage-status">Project visuals</a>.</figcaption></figure>
+      <div class="codex-demo" data-ui>
+        <div class="demo-heading"><img src="assets/codex-icon.png" width="256" height="256" alt="" loading="lazy"><span>Codex Usage Status</span></div>
+        <div class="demo-styles" role="group" aria-label="Preview display style">
+          <button type="button" data-display="rings" aria-controls="quota-display" aria-pressed="true">Double ring</button>
+          <button type="button" data-display="readout" aria-controls="quota-display" aria-pressed="false">Large readout</button>
+        </div>
+        <div class="quota-display" id="quota-display">
+          <div class="quota-rings" id="quota-rings">
+            <div class="quota-window">
+              <svg viewBox="0 0 220 220" role="img" aria-labelledby="five-hour-title"><title id="five-hour-title">5-hour window: 72 percent remaining</title><circle class="ring-track" cx="110" cy="110" r="91"/><circle class="ring-value" id="five-hour-ring" cx="110" cy="110" r="91" pathLength="100" stroke-dasharray="72 100"/><text class="ring-number" id="five-hour-number" x="110" y="125" text-anchor="middle">72</text><text class="ring-unit" x="110" y="154" text-anchor="middle">% left</text></svg>
+              <p>5-hour window</p>
+            </div>
+            <div class="quota-window">
+              <svg viewBox="0 0 220 220" role="img" aria-labelledby="weekly-title"><title id="weekly-title">Weekly window: 54 percent remaining</title><circle class="ring-track" cx="110" cy="110" r="91"/><circle class="ring-value" cx="110" cy="110" r="91" pathLength="100" stroke-dasharray="54 100"/><text class="ring-number" x="110" y="125" text-anchor="middle">54</text><text class="ring-unit" x="110" y="154" text-anchor="middle">% left</text></svg>
+              <p>Weekly window</p>
+            </div>
+          </div>
+          <div class="quota-readout" id="quota-readout" hidden>
+            <div><div class="readout-line"><span>5-hour window</span><strong id="readout-five-hour">72%</strong></div><div class="readout-track"><span id="readout-fill" style="transform:scaleX(.72)"></span></div></div>
+            <div><div class="readout-line"><span>Weekly window</span><strong>54%</strong></div><div class="readout-track"><span style="transform:scaleX(.54)"></span></div></div>
+          </div>
+        </div>
+        <div class="demo-scenarios" role="group" aria-label="Preview quota state"><button type="button" data-quota="normal" aria-pressed="true">Plenty left</button><button type="button" data-quota="low" aria-pressed="false">Running low</button><button type="button" data-quota="stale" aria-pressed="false">Last known</button></div>
+        <p class="demo-status" id="demo-status" aria-live="polite">Two windows. One glance.</p>
+        <p class="demo-note">Interactive display study. Example values.</p>
+        <noscript><p>In the app, two rings show remaining 5-hour and weekly usage. A larger readout is also available.</p></noscript>
       </div>
       <div class="project-copy">
         <h3 id="codex-title">Codex Usage Status</h3>
-        <p class="project-subtitle">A little clarity in the menu bar.</p>
+        <p class="project-subtitle">Usage, at a glance.</p>
         <p>A macOS companion that makes Codex usage limits visible at a glance. An independently maintained continuation of an existing open-source app.</p>
         <dl class="project-facts"><div><dt>Focus</dt><dd>Interface & release iteration</dd></div><div><dt>Stage</dt><dd>Released</dd></div><div><dt>Platform</dt><dd>macOS</dd></div></dl>
         <a class="project-link" href="https://github.com/TrevorLt/codex-usage-status">View on GitHub <span aria-hidden="true">↗</span></a>
@@ -68,12 +91,12 @@
   </section>
 
   <section class="about section" id="about" aria-labelledby="about-title">
-    <div class="section-intro"><h2 id="about-title">About me</h2><p>I like understanding a system by making something with it.</p></div>
-    <div class="about-columns"><p>I’m Trevor, a <mark>computer engineering student</mark> at Northwestern University. I’m interested in the space where physical systems meet software: how a sensor becomes a measurement, how a mechanism moves, and how an interface makes a tool easier to use.</p><p>My projects take me between <mark>prototyping and the screen</mark>. Sometimes that means wiring and soldering around a Pico 2. Other times, it means refining a small Mac app with AI-assisted development. I value a working, understandable result and a clear account of what I contributed.</p></div>
+    <div class="section-intro"><h2 id="about-title">About me</h2><p>Robotics is what I’m most excited to explore.</p></div>
+    <div class="about-columns"><p>I’m Trevor, a <mark>computer engineering student</mark> at Northwestern University with a passion for robotics. I’m exploring how sensing, mechanisms and software come together to help a machine understand and interact with the world.</p><p>I learn best by <mark>building and experimenting</mark>. CryptScan is one way I’m exploring that interest, starting with distance measurements and a simple rotating platform. Alongside hardware, I enjoy refining useful software and learning what makes a small tool feel clear and dependable.</p></div>
   </section>
 
   <section class="contact section" id="contact" aria-labelledby="contact-title">
-    <h2 id="contact-title">Let’s compare notes.</h2><div class="contact-row"><p>Interested in physical computing,<br>useful tools, or a thoughtful build?</p><a class="button" href="https://github.com/TrevorLt">Find me on GitHub <span aria-hidden="true">↗</span></a></div>
+    <h2 id="contact-title">Let’s compare notes.</h2><div class="contact-row"><p>Exploring robotics, sensing,<br>or a useful idea of your own?</p><a class="button" href="https://github.com/TrevorLt">Find me on GitHub <span aria-hidden="true">↗</span></a></div>
   </section>
 </main>
 <footer><a class="footer-name" href="#home" aria-label="Back to top">Trevor Lin</a><div class="footer-bottom"><span>Made with curiosity.</span><a href="https://github.com/TrevorLt/trevorlt.github.io">Website source</a><span>© 2026 Trevor Lin</span></div><p class="photo-credit">Pico 2 photo: <a href="https://commons.wikimedia.org/w/index.php?curid=169801139">Profpcde, Wikimedia Commons</a> · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>.</p></footer>

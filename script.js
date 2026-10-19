@@ -35,6 +35,35 @@ function drawScan() {
 }
 slider?.addEventListener('input', drawScan);
 drawScan();
+// A portfolio display study with example values; no account data is read.
+const codexDemo = document.querySelector('.codex-demo');
+codexDemo?.classList.add('is-interactive');
+const displayButtons = [...document.querySelectorAll('[data-display]')];
+const quotaButtons = [...document.querySelectorAll('[data-quota]')];
+for (const button of displayButtons) {
+  button.addEventListener('click', () => {
+    const rings = button.dataset.display === 'rings';
+    document.querySelector('#quota-rings').hidden = !rings;
+    document.querySelector('#quota-readout').hidden = rings;
+    for (const other of displayButtons) other.setAttribute('aria-pressed', String(other === button));
+  });
+}
+for (const button of quotaButtons) {
+  button.addEventListener('click', () => {
+    const state = button.dataset.quota;
+    const low = state === 'low';
+    const value = low ? 12 : 72;
+    const prefix = state === 'stale' ? '~' : '';
+    codexDemo.classList.toggle('is-low', low);
+    document.querySelector('#five-hour-ring').setAttribute('stroke-dasharray', value + ' 100');
+    document.querySelector('#five-hour-number').textContent = prefix + value;
+    document.querySelector('#five-hour-title').textContent = '5-hour window: ' + value + ' percent remaining' + (state === 'stale' ? ', last known reading' : '');
+    document.querySelector('#readout-five-hour').textContent = prefix + value + '%';
+    document.querySelector('#readout-fill').style.transform = 'scaleX(' + value / 100 + ')';
+    document.querySelector('#demo-status').textContent = state === 'low' ? 'A clear warning when a window falls below 20%.' : state === 'stale' ? 'Last-known values stay visible when a refresh fails.' : 'Two windows. One glance.';
+    for (const other of quotaButtons) other.setAttribute('aria-pressed', String(other === button));
+  });
+}
 // Content is visible before JavaScript. Motion enhances the finished page.
 if (!reduced.matches && 'IntersectionObserver' in window) {
   const observer = new IntersectionObserver(entries => {
@@ -45,6 +74,6 @@ if (!reduced.matches && 'IntersectionObserver' in window) {
       observer.unobserve(el);
     }
   }, {threshold:.1});
-  document.querySelectorAll('.platform-photo,.menu-study img,.installer,.section-intro h2,.section-intro>p,.project-index a,.project-copy h3,.project-subtitle,.project-copy>p:not(.project-subtitle),.project-facts,.project-link,.scanner-stage,.codex-media,.about-columns p,.contact h2,.contact-row p,.contact-row a,.footer-name').forEach((el,i)=>{el.dataset.delay=String((i%3)*65);observer.observe(el)});
+  document.querySelectorAll('.platform-photo,.demo-heading,.demo-styles,.quota-window,.demo-scenarios,.demo-status,.section-intro h2,.section-intro>p,.project-index a,.project-copy h3,.project-subtitle,.project-copy>p:not(.project-subtitle),.project-facts,.project-link,.scanner-stage,.codex-demo,.about-columns p,.contact h2,.contact-row p,.contact-row a,.footer-name').forEach((el,i)=>{el.dataset.delay=String((i%3)*65);observer.observe(el)});
   document.querySelectorAll('.hero h1 span').forEach((el,i)=>el.animate([{transform:'translateY(75px)'},{transform:'translateY(0)'}],{duration:900,delay:i*90,easing:'cubic-bezier(.16,1,.3,1)'}));
 }
