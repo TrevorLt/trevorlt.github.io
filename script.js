@@ -164,13 +164,14 @@ function restoreURLState() {
 restoreURLState();
 window.addEventListener('popstate', restoreURLState);
 
-// Scroll moves only the white field, so the neutral difference-blended name
-// changes ink naturally. Geometry is cached on resize, never read in scroll work.
+// Move only the dark field above a permanent white hero background. Stop
+// updating after the name passes; never expose dark bands behind the intro.
+// Geometry is cached on resize, never read in scroll work.
 const hero = document.querySelector('.hero');
-let heroTop = 0, heroHeight = 1, scrollFrame = 0, lastShift = null;
+let heroTop = 0, heroEffectEnd = 1, scrollFrame = 0, lastShift = null;
 function paintHero() {
   scrollFrame = 0;
-  const travel = Math.max(0, Math.min(heroHeight, window.scrollY - heroTop));
+  const travel = Math.max(0, Math.min(heroEffectEnd, window.scrollY - heroTop));
   const shift = reduced.matches ? 0 : -travel * .72;
   if (shift !== lastShift) {
     hero.style.setProperty('--hero-shift', shift + 'px');
@@ -183,13 +184,14 @@ function queueHero() {
 function measureHero() {
   const rect = hero.getBoundingClientRect();
   heroTop = rect.top + window.scrollY;
-  heroHeight = rect.height;
+  heroEffectEnd = Math.max(0, hero.querySelector('h1').getBoundingClientRect().bottom - rect.top);
   queueHero();
 }
 window.addEventListener('scroll', queueHero, { passive: true });
 window.addEventListener('resize', measureHero, { passive: true });
 window.addEventListener('pageshow', measureHero);
 measureHero();
+document.fonts.ready.then(measureHero);
 
 // The page stays readable before JavaScript. Entrances are short and optional.
 const motionAnimations = new Set();
