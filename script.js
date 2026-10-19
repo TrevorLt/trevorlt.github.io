@@ -132,22 +132,75 @@ function setDisplay(mode, sync = true) {
   for (const button of displayButtons) button.setAttribute('aria-pressed', String(button.dataset.display === (rings ? 'rings' : 'readout')));
   if (sync) updateURL('display', rings ? 'rings' : 'readout');
 }
+const quotaUI = {
+  ring: document.querySelector('#five-hour-ring'),
+  number: document.querySelector('#five-hour-number'),
+  title: document.querySelector('#five-hour-title'),
+  readout: document.querySelector('#readout-five-hour'),
+  fill: document.querySelector('#readout-fill'),
+  status: document.querySelector('#demo-status')
+};
+const quotaStyle = getComputedStyle(codexDemo);
+const rgbFromHex = hex => hex.trim().replace('#', '').match(/.{2}/g).map(value => parseInt(value, 16));
+const quotaGreen = rgbFromHex(quotaStyle.getPropertyValue('--demo-accent'));
+const quotaRed = rgbFromHex(quotaStyle.getPropertyValue('--demo-warning'));
+let quotaValue = 72, quotaTarget = 72, quotaState = 'normal', quotaFrame = 0;
+function renderQuota(value) {
+  quotaValue = value;
+  const rounded = Math.round(value);
+  const stale = quotaState === 'stale';
+  const prefix = stale ? '~' : '';
+  // Color follows the displayed value, not the clicked button. Blend from
+  // green at 20% to red at 12%, and reverse the same path as quota recovers.
+  const warning = Math.max(0, Math.min(1, (20 - value) / 8));
+  const blend = warning * warning * (3 - 2 * warning);
+  const color = 'rgb(' + quotaGreen.map((channel, i) => Math.round(channel + (quotaRed[i] - channel) * blend)).join(', ') + ')';
+  quotaUI.ring.setAttribute('stroke-dasharray', value.toFixed(3) + ' 100');
+  quotaUI.ring.style.stroke = color;
+  quotaUI.fill.style.transform = 'scaleX(' + value / 100 + ')';
+  quotaUI.fill.style.backgroundColor = color;
+  quotaUI.number.textContent = prefix + rounded;
+  quotaUI.readout.textContent = prefix + rounded + '%';
+  quotaUI.title.textContent = '5-hour window: ' + rounded + ' percent remaining' + (stale ? ', last known reading' : '');
+}
+function finishQuota() {
+  cancelAnimationFrame(quotaFrame);
+  quotaFrame = 0;
+  renderQuota(quotaTarget);
+}
 function setQuota(state, sync = true) {
   if (!['normal', 'low', 'stale'].includes(state)) state = 'normal';
-  const low = state === 'low';
-  const value = low ? 12 : 72;
-  const prefix = state === 'stale' ? '~' : '';
-  codexDemo.classList.toggle('is-low', low);
-  document.querySelector('#five-hour-ring').setAttribute('stroke-dasharray', value + ' 100');
-  document.querySelector('#five-hour-number').textContent = prefix + value;
-  document.querySelector('#five-hour-title').textContent = '5-hour window: ' + value + ' percent remaining' + (state === 'stale' ? ', last known reading' : '');
-  document.querySelector('#readout-five-hour').textContent = prefix + value + '%';
-  document.querySelector('#readout-fill').style.transform = 'scaleX(' + value / 100 + ')';
-  document.querySelector('#demo-status').textContent = low
+  cancelAnimationFrame(quotaFrame);
+  quotaFrame = 0;
+  quotaState = state;
+  quotaTarget = state === 'low' ? 12 : 72;
+  const startValue = quotaValue;
+  renderQuota(startValue);
+  quotaUI.status.textContent = state === 'low'
     ? '12% remains in the 5-hour window. A warning appears below 20%.'
     : state === 'stale' ? 'Last-known values stay visible when a refresh fails.' : 'Two windows. One glance.';
   for (const button of quotaButtons) button.setAttribute('aria-pressed', String(button.dataset.quota === state));
   if (sync) updateURL('quota', state);
+  // Loading a shared state is immediate. User-triggered changes animate from
+  // the current frame, even when a previous transition is interrupted.
+  if (!sync || reduced.matches || Math.abs(quotaTarget - startValue) < .001) {
+    finishQuota();
+    return;
+  }
+  const startTime = performance.now();
+  const duration = Math.max(420, 1300 * Math.abs(quotaTarget - startValue) / 60);
+  const target = quotaTarget;
+  function tick(now) {
+    const progress = Math.max(0, Math.min(1, (now - startTime) / duration));
+    const eased = progress < .5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2;
+    renderQuota(startValue + (target - startValue) * eased);
+    if (progress < 1) quotaFrame = requestAnimationFrame(tick);
+    else {
+      quotaFrame = 0;
+      renderQuota(target);
+    }
+  }
+  quotaFrame = requestAnimationFrame(tick);
 }
 for (const button of displayButtons) button.addEventListener('click', () => setDisplay(button.dataset.display));
 for (const button of quotaButtons) button.addEventListener('click', () => setQuota(button.dataset.quota));
@@ -223,6 +276,7 @@ document.querySelectorAll('.hero h1 span').forEach((el, i) => entrance(el,
 ));
 reduced.addEventListener('change', () => {
   if (reduced.matches) {
+    finishQuota();
     for (const disclosure of disclosures) disclosure.settle(disclosure.expanded);
     for (const animation of motionAnimations) animation.cancel();
     motionAnimations.clear();
