@@ -23,3 +23,9 @@ a,summary{touch-action:manipulation}
 @media(max-width:900px) and (min-width:601px){.codex-demo{padding:22px}.quota-rings{gap:10px}.quota-display{padding:30px 0;min-height:230px}.codex-demo button{font-size:14px;padding:10px}.demo-scenarios button{padding:10px 8px;flex-basis:44%}.quota-window p{font-size:14px}.demo-heading{font-size:14px}.readout-line strong{font-size:44px}}
 @media(max-width:600px){.codex-demo{padding:24px 18px}.quota-rings{gap:12px}.quota-display{min-height:240px;padding:32px 0}.demo-styles{margin-top:26px}.demo-styles button{font-size:14px}.demo-scenarios button{font-size:13px;padding:10px 6px}.quota-window p{font-size:14px}.quota-readout{padding:15px 4px}.readout-line strong{font-size:48px}.demo-status{font-size:15px}.hero-foot{font-size:13px}.hero-copy p{max-width:350px}}
 .codex-demo:not(.is-interactive) .demo-styles,.codex-demo:not(.is-interactive) .demo-scenarios{display:none}
+
+/* Expanding project details must not recenter the adjacent scan concept. */
+.scanner-stage{align-self:start}
+/* Keep both display modes in one grid cell so its size fits the taller mode. */
+.quota-rings,.quota-readout{grid-area:1 / 1;min-width:0}
+.quota-rings[hidden],.quota-readout[hidden]{display:grid;visibility:hidden;pointer-events:none}
