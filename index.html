@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111111">
   <title>Trevor Lin — Exploring Robotics</title>
   <meta name="description" content="Trevor Lin is a computer engineering student at Northwestern, passionate about robotics and exploring how sensing, hardware and software work together.">
@@ -14,8 +14,8 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/anton.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261018-stable-layout">
-  <script src="script.js?v=20261018-stable-layout" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261018-motion-audit">
+  <script src="script.js?v=20261018-motion-audit" defer></script>
 </head>
 <body>
 <a class="skip" href="#work">Skip to work</a>
@@ -25,35 +25,35 @@
 </header>
 <main>
   <section class="hero" id="home" aria-labelledby="name">
-    <div class="hero-title"><h1 id="name"><span>Trevor</span><span>Lin</span></h1></div>
+    <div class="hero-title"><h1 id="name" translate="no"><span>Trevor</span><span>Lin</span></h1></div>
     <div class="hero-copy"><p>Passionate about exploring robotics.<br>Computer engineering at Northwestern.</p><a class="button" href="#work">Explore my work <span aria-hidden="true">↗</span></a></div>
     <div class="hero-foot"><span>Computer engineering student.</span><span>Learning by building.</span></div>
   </section>
 
-  <section class="work section" id="work" aria-labelledby="work-title">
+  <section class="work section" id="work" tabindex="-1" aria-labelledby="work-title">
     <div class="section-intro"><h2 id="work-title">Selected work</h2><p>Exploring how machines sense the world.<br>Making software that’s clearer to use.</p></div>
     <div class="project-index" aria-label="Project index"><a href="#cryptscan">CryptScan <span>Hardware</span></a><a href="#codex">Codex Usage Status <span>Software</span></a></div>
 
     <article class="project scanner-project" id="cryptscan" aria-labelledby="scanner-title">
       <div class="project-copy">
-        <h3 id="scanner-title">CryptScan</h3>
+        <h3 id="scanner-title" translate="no">CryptScan</h3>
         <p class="project-subtitle">A small step into 3D scanning.</p>
         <p>A course project exploring how a distance sensor, a rotating platform and a Raspberry Pi Pico 2 can turn measurements into a point cloud.</p>
         <dl class="project-facts"><div><dt>Focus</dt><dd>Physical computing</dd></div><div><dt>Stage</dt><dd>In development</dd></div><div><dt>Platform</dt><dd>Raspberry Pi Pico 2</dd></div></dl>
-        <details><summary>Inside the project</summary><div class="project-detail"><p>The planned setup combines a distance sensor with a rotating platform. Height is adjusted by hand, with measurements intended to become a simple 3D point cloud.</p><p>I’m developing this project through DSGN 297. My related Pico 2 coursework includes connecting motors, a distance sensor and NeoPixels, along with soldering components and wiring.</p><p>The current focus is getting a coarse scanning setup working. A complete scan has not yet been demonstrated.</p></div></details>
+        <details id="scanner-details"><summary aria-controls="scanner-detail-content">Inside the project</summary><div class="project-detail" id="scanner-detail-content"><p>The planned setup combines a distance sensor with a rotating platform. Height is adjusted by hand, with measurements intended to become a simple 3D point cloud.</p><p>I’m developing this project through DSGN 297. My related Pico 2 coursework includes connecting motors, a distance sensor and NeoPixels, along with soldering components and wiring.</p><p>The current focus is getting a coarse scanning setup working. A complete scan has not yet been demonstrated.</p></div></details>
         <figure class="platform-photo"><img src="assets/macro-photograph-of-the-rp2350-microcontroller-on.jpg" width="1920" height="1440" alt="The RP2350 chip at the center of a Raspberry Pi Pico 2 board" loading="lazy" decoding="async"><figcaption>Platform reference: Raspberry Pi Pico 2.</figcaption></figure>
       </div>
       <div class="scanner-stage" data-ui>
         <div class="stage-top"><span>Scan concept</span><span id="scan-angle">180° sweep</span></div>
         <canvas id="scan-canvas" width="900" height="660" role="img" aria-label="Conceptual scan path around a sample object. This illustration is not measured scan data.">The planned scanner rotates a sample past a distance sensor, then combines measurements at different heights into a point cloud.</canvas>
         <div class="scan-controls"><label for="sweep">Explore the sweep</label><input id="sweep" name="sweep" type="range" min="0" max="360" value="180" step="1" aria-describedby="scan-caption"></div>
-        <noscript><p>The concept uses a rotating platform, a fixed distance sensor and manual height adjustment.</p></noscript><p id="scan-caption">An illustration of the planned scan path, not measured data.</p>
+        <p class="scan-fallback">The concept uses a rotating platform, a fixed distance sensor and manual height adjustment.</p><p id="scan-caption">An illustration of the planned scan path, not measured data.</p>
       </div>
     </article>
 
     <article class="project codex-project" id="codex" aria-labelledby="codex-title">
       <div class="codex-demo" data-ui>
-        <div class="demo-heading"><img src="assets/codex-icon.png" width="256" height="256" alt="" loading="lazy"><span>Codex Usage Status</span></div>
+        <div class="demo-heading"><img src="assets/codex-icon.png" width="256" height="256" alt="" loading="lazy"><span translate="no">Codex Usage Status</span></div>
         <div class="demo-styles" role="group" aria-label="Preview display style">
           <button type="button" data-display="rings" aria-controls="quota-display" aria-pressed="true">Double ring</button>
           <button type="button" data-display="readout" aria-controls="quota-display" aria-pressed="false">Large readout</button>
@@ -80,12 +80,12 @@
         <noscript><p>In the app, two rings show remaining 5-hour and weekly usage. A larger readout is also available.</p></noscript>
       </div>
       <div class="project-copy">
-        <h3 id="codex-title">Codex Usage Status</h3>
+        <h3 id="codex-title" translate="no">Codex Usage Status</h3>
         <p class="project-subtitle">Usage, at a glance.</p>
         <p>A macOS companion that makes Codex usage limits visible at a glance. An independently maintained continuation of an existing open-source app.</p>
         <dl class="project-facts"><div><dt>Focus</dt><dd>Interface & release iteration</dd></div><div><dt>Stage</dt><dd>Released</dd></div><div><dt>Platform</dt><dd>macOS</dd></div></dl>
         <a class="project-link" href="https://github.com/TrevorLt/codex-usage-status">View on GitHub <span aria-hidden="true">↗</span></a>
-        <details><summary>My contribution</summary><div class="project-detail"><p>I identified refresh and display issues, shaped interface decisions, and iterated on the app with AI-assisted development, runtime checks and visual review.</p><p>The work also included packaging releases and investigating feedback from other users. The underlying app originated with <a href="https://github.com/tollenceld/codex-usage-status">tollenceld/codex-usage-status</a>.</p><a href="https://github.com/TrevorLt/codex-usage-status/releases">Browse releases</a></div></details>
+        <details id="contribution-details"><summary aria-controls="contribution-detail-content">My contribution</summary><div class="project-detail" id="contribution-detail-content"><p>I identified refresh and display issues, shaped interface decisions, and iterated on the app with AI-assisted development, runtime checks and visual review.</p><p>The work also included packaging releases and investigating feedback from other users. The underlying app originated with <a href="https://github.com/tollenceld/codex-usage-status">tollenceld/codex-usage-status</a>.</p><a href="https://github.com/TrevorLt/codex-usage-status/releases">Browse releases</a></div></details>
       </div>
     </article>
   </section>
