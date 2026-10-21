@@ -5,10 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111111">
   <title>Trevor Lin — Exploring Robotics</title>
-  <meta name="description" content="Trevor Lin is a computer engineering student at Northwestern interested in mechatronics and robotics. He learns by designing, building and testing physical systems.">
+  <meta name="description" content="Trevor Lin is a computer engineering student at Northwestern interested in mechatronics and robotics. He learns by designing, building, and testing physical systems.">
   <link rel="canonical" href="https://trevorlt.github.io/">
   <meta property="og:title" content="Trevor Lin — Exploring Robotics">
-  <meta property="og:description" content="Exploring mechatronics and robotics through hands-on building, electronics and software.">
+  <meta property="og:description" content="Exploring mechatronics and robotics through hands-on building, electronics, and software.">
   <meta property="og:type" content="website">
   <meta property="og:url" content="https://trevorlt.github.io/">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
@@ -37,17 +37,17 @@
     <article class="project scanner-project" id="cryptscan" aria-labelledby="scanner-title">
       <div class="project-copy">
         <h3 id="scanner-title" translate="no">CryptScan</h3>
-        <p class="project-subtitle">A small step into 3D scanning.</p>
-        <p>A course project exploring how a distance sensor, a rotating platform and a Raspberry Pi Pico 2 can turn measurements into a point cloud.</p>
-        <dl class="project-facts"><div><dt>Focus</dt><dd>Physical computing</dd></div><div><dt>Stage</dt><dd>In development</dd></div><div><dt>Platform</dt><dd>Raspberry Pi Pico 2</dd></div></dl>
-        <details id="scanner-details"><summary aria-controls="scanner-detail-content">Inside the project</summary><div class="project-detail" id="scanner-detail-content"><p>The planned setup combines a distance sensor with a rotating platform. Height is adjusted by hand, with measurements intended to become a simple 3D point cloud.</p><p>I’m developing this project through DSGN 297. My related Pico 2 coursework includes connecting motors, a distance sensor and NeoPixels, along with soldering components and wiring.</p><p>The current focus is getting a coarse scanning setup working. A complete scan has not yet been demonstrated.</p></div></details>
+        <p class="project-subtitle">From distance measurements to 3D geometry.</p>
+        <p>A mechatronics prototype built around a Raspberry Pi Pico 2 and a VL53L1X time-of-flight distance sensor, designed to reconstruct the approximate geometry of small objects through controlled rotation and layered measurements.</p>
+        <dl class="project-facts"><div><dt>Focus</dt><dd>Mechatronics &amp; sensing</dd></div><div><dt>Stage</dt><dd>In development</dd></div><div><dt>Platform</dt><dd>Raspberry Pi Pico 2</dd></div></dl>
+        <details id="scanner-details"><summary aria-controls="scanner-detail-content">Inside the project</summary><div class="project-detail" id="scanner-detail-content"><p>The planned motion system pairs a StepperOnline 17HE08-1004S NEMA 17 stepper motor with an HR4988SQ-based driver board to rotate the object. A manually adjustable sensor carriage provides measurements at multiple heights.</p><p>I’m developing CryptScan through DSGN 297. The current work focuses on VL53L1X sensor integration, CircuitPython distance acquisition, and USB serial output to a computer. The planned reconstruction pipeline combines distance, commanded rotation angle, and sensor height into 3D coordinates for point-cloud visualization and PLY export.</p><p>The prototype targets coarse, recognizable geometry. Motor integration and multilayer reconstruction remain in development; a complete 3D scan has not yet been demonstrated.</p></div></details>
         <figure class="platform-photo"><img src="assets/macro-photograph-of-the-rp2350-microcontroller-on.jpg" width="1920" height="1440" alt="The RP2350 chip at the center of a Raspberry Pi Pico 2 board" loading="lazy" decoding="async"><figcaption>Platform reference: Raspberry Pi Pico 2.</figcaption></figure>
       </div>
       <div class="scanner-stage" data-ui>
         <div class="stage-top"><span>Scan concept</span><span id="scan-angle">180° sweep</span></div>
         <canvas id="scan-canvas" width="900" height="660" role="img" aria-label="Conceptual scan path around a sample object. This illustration is not measured scan data.">The planned scanner rotates a sample past a distance sensor, then combines measurements at different heights into a point cloud.</canvas>
         <div class="scan-controls"><label for="sweep">Explore the sweep</label><input id="sweep" name="sweep" type="range" min="0" max="360" value="180" step="1" aria-describedby="scan-caption"></div>
-        <p class="scan-fallback">The concept uses a rotating platform, a fixed distance sensor and manual height adjustment.</p><p id="scan-caption">An illustration of the planned scan path, not measured data.</p>
+        <p class="scan-fallback">The concept uses a rotating platform, a fixed distance sensor, and manual height adjustment.</p><p id="scan-caption">An illustration of the planned scan path, not measured data.</p>
       </div>
     </article>
 
@@ -85,14 +85,14 @@
         <p>A macOS companion that makes Codex usage limits visible at a glance. An independently maintained continuation of an existing open-source app.</p>
         <dl class="project-facts"><div><dt>Focus</dt><dd>Interface & release iteration</dd></div><div><dt>Stage</dt><dd>Released</dd></div><div><dt>Platform</dt><dd>macOS</dd></div></dl>
         <a class="project-link" href="https://github.com/TrevorLt/codex-usage-status">View on GitHub <span aria-hidden="true">↗</span></a>
-        <details id="contribution-details"><summary aria-controls="contribution-detail-content">My contribution</summary><div class="project-detail" id="contribution-detail-content"><p>I identified refresh and display issues, shaped interface decisions, and iterated on the app with AI-assisted development, runtime checks and visual review.</p><p>The work also included packaging releases and investigating feedback from other users. The underlying app originated with <a href="https://github.com/tollenceld/codex-usage-status">tollenceld/codex-usage-status</a>.</p><a href="https://github.com/TrevorLt/codex-usage-status/releases">Browse releases</a></div></details>
+        <details id="contribution-details"><summary aria-controls="contribution-detail-content">My contribution</summary><div class="project-detail" id="contribution-detail-content"><p>I identified refresh and display issues, shaped interface decisions, and iterated on the app with AI-assisted development, runtime checks, and visual review.</p><p>The work also included packaging releases and investigating feedback from other users. The underlying app originated with <a href="https://github.com/tollenceld/codex-usage-status">tollenceld/codex-usage-status</a>.</p><a href="https://github.com/TrevorLt/codex-usage-status/releases">Browse releases</a></div></details>
       </div>
     </article>
   </section>
 
   <section class="about section" id="about" aria-labelledby="about-title">
     <div class="section-intro"><h2 id="about-title">About me</h2><p>I like figuring things out by building them.</p></div>
-    <div class="about-columns"><p>I’m Trevor, a <mark>computer engineering student</mark> at Northwestern University interested in mechatronics and robotics. I’m drawn to the point where mechanical design, electronics and software come together—and to figuring out how they work as a physical system.</p><p>I learn best with <mark>something in my hands</mark>: a part to model, a wire to solder or a mechanism to assemble and troubleshoot. My projects have taken me from CAD and FPV drone assembly to connecting motors and sensors with a Pico 2. I enjoy making a first version work, seeing where it falls short and trying again. That’s how I’m exploring robotics, one build at a time.</p></div>
+    <div class="about-columns"><p>I’m Trevor, a <mark>computer engineering student</mark> at Northwestern University interested in mechatronics and robotics. I’m drawn to the point where mechanical design, electronics, and software come together—and to figuring out how they work as a physical system.</p><p>I learn best with <mark>something in my hands</mark>: a part to model, a wire to solder, or a mechanism to assemble and troubleshoot. My projects have taken me from building combat robots and assembling and tuning FPV drones to developing a distance-sensor-based 3D scanner. I enjoy making a first version work, seeing where it falls short, and trying again. That’s how I’m exploring robotics, one build at a time.</p></div>
   </section>
 
   <section class="contact section" id="contact" aria-labelledby="contact-title">
