@@ -82,42 +82,99 @@ window.addEventListener('resize', () => {
 const canvas = document.querySelector('#scan-canvas');
 const slider = document.querySelector('#sweep');
 const angleLabel = document.querySelector('#scan-angle');
+const scanTurns = 6, scanLanes = 4, scanSamples = scanTurns * 96;
+let scanProgress = .5, scanTarget = .5, scanFrame = 0, scanLastTime = 0;
+// Four adjacent helical sampling tracks are an illustrative reveal, not a
+// claim that the single-sensor prototype captures four physical rows at once.
+function scanPoint(t, lane) {
+  const row = t * 24 + lane;
+  const u = row / 27;
+  const radius = 82 + 30 * Math.sin(u * Math.PI) + 14 * Math.cos(u * Math.PI * 2);
+  const angle = t * scanTurns * Math.PI * 2;
+  return { x: Math.cos(angle) * radius, y: row * 10 - 105, z: Math.sin(angle) * radius };
+}
+const scanCloud = Array.from({ length: (scanSamples + 1) * scanLanes }, (_, i) => {
+  const t = Math.floor(i / scanLanes) / scanSamples;
+  return { ...scanPoint(t, i % scanLanes), t };
+});
 function drawScan() {
   if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   canvas.closest('.scanner-stage').classList.add('is-interactive');
-  const w = canvas.width, h = canvas.height;
-  const sweep = Number(slider.value);
+  const w = canvas.width, h = canvas.height, p = scanProgress;
+  const project = ({ x, y, z }) => ({ x: w * .5 + (x * .89 - z * .46) * 1.25, y: h * .55 + (x * .22 + z * .4 - y) * 1.25, depth: x * .46 + z * .89 });
   ctx.clearRect(0, 0, w, h);
-  const project = (x, y, z) => [w * .5 + (x * .89 - z * .46) * 1.25, h * .55 + (x * .22 + z * .4 - y) * 1.25];
-  // Illustrative sampling geometry, not recordings from the hardware.
-  for (let row = 0; row < 25; row++) {
-    const y = row * 11 - 95;
-    const radius = 82 + 30 * Math.sin(row / 24 * Math.PI) + 14 * Math.cos(row / 24 * Math.PI * 2);
-    for (let deg = 0; deg < 360; deg += 7.5) {
-      const rad = deg * Math.PI / 180;
-      const [px, py] = project(Math.cos(rad) * radius, y, Math.sin(rad) * radius);
-      ctx.fillStyle = deg <= sweep ? '#dafa9c' : '#62695c';
-      ctx.beginPath(); ctx.arc(px, py, deg <= sweep ? 2.5 : 1.4, 0, Math.PI * 2); ctx.fill();
-    }
-  }
-  ctx.lineWidth = 2; ctx.strokeStyle = '#9aab87'; ctx.beginPath();
-  for (let deg = 0; deg <= 360; deg += 3) {
-    const rad = deg * Math.PI / 180;
-    const [x, y] = project(Math.cos(rad) * 185, -120, Math.sin(rad) * 185);
-    deg ? ctx.lineTo(x, y) : ctx.moveTo(x, y);
+  // Ground plane stays still; the sampling head winds upward around the object.
+  ctx.lineWidth = 1.5; ctx.strokeStyle = '#80936c'; ctx.beginPath();
+  for (let i = 0; i <= 120; i++) {
+    const a = i / 120 * Math.PI * 2;
+    const q = project({ x: Math.cos(a) * 185, y: -128, z: Math.sin(a) * 185 });
+    i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y);
   }
   ctx.stroke();
-  const rad = sweep * Math.PI / 180;
-  const [sx, sy] = project(Math.cos(rad) * 185, 10, Math.sin(rad) * 185);
-  const [ex, ey] = project(Math.cos(rad) * 108, 10, Math.sin(rad) * 108);
-  ctx.strokeStyle = '#dafa9c'; ctx.lineWidth = 3; ctx.beginPath(); ctx.moveTo(sx, sy); ctx.lineTo(ex, ey); ctx.stroke();
-  ctx.fillStyle = '#dafa9c'; ctx.fillRect(sx - 10, sy - 10, 20, 20);
-  angleLabel.textContent = sweep + '° sweep';
-  slider.setAttribute('aria-valuetext', sweep + ' degree sweep');
+  const items = scanCloud.map(point => ({ ...project(point), point, kind: 'point' }));
+  // Short, fading tracks make the spiral legible without covering the cloud.
+  if (p > 0) for (let lane = 0; lane < scanLanes; lane++) {
+    const start = Math.max(0, p - 1.15 / scanTurns);
+    const steps = Math.max(1, Math.ceil((p - start) * 900));
+    for (let i = 0; i < steps; i++) {
+      const t = start + (p - start) * i / steps;
+      const a = project(scanPoint(t, lane));
+      const b = project(scanPoint(start + (p - start) * (i + 1) / steps, lane));
+      items.push({ kind: 'trail', depth: (a.depth + b.depth) / 2, a, b, alpha: .12 + .55 * i / steps });
+    }
+  }
+  const angle = p * scanTurns * Math.PI * 2;
+  const center = scanPoint(p, 1.5);
+  const tip = project(center);
+  const sensor = project({ x: Math.cos(angle) * 180, y: center.y, z: Math.sin(angle) * 180 });
+  items.push({ kind: 'needle', depth: (sensor.depth + tip.depth) / 2, sensor, tip });
+  items.sort((a, b) => a.depth - b.depth);
+  for (const item of items) {
+    const front = item.depth > 0;
+    if (item.kind === 'point') {
+      const captured = p > 0 && item.point.t <= p;
+      const edge = captured ? Math.max(0, 1 - (p - item.point.t) * 75) : 0;
+      ctx.fillStyle = captured ? `rgba(218,250,156,${(front ? .84 : .38) + edge * .14})` : `rgba(139,151,125,${front ? .28 : .13})`;
+      ctx.beginPath(); ctx.arc(item.x, item.y, captured ? 2 + edge * .8 : 1.25, 0, Math.PI * 2); ctx.fill();
+    } else if (item.kind === 'trail') {
+      ctx.strokeStyle = `rgba(218,250,156,${item.alpha * (front ? 1 : .4)})`;
+      ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(item.a.x, item.a.y); ctx.lineTo(item.b.x, item.b.y); ctx.stroke();
+    } else {
+      ctx.globalAlpha = front ? 1 : .5;
+      // The whole needle follows the head's angle AND height, including its base.
+      ctx.strokeStyle = '#dafa9c'; ctx.lineWidth = 2.5; ctx.beginPath();
+      ctx.moveTo(sensor.x, sensor.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
+      ctx.save(); ctx.translate(sensor.x, sensor.y); ctx.rotate(Math.atan2(tip.y - sensor.y, tip.x - sensor.x));
+      ctx.fillStyle = '#dafa9c'; ctx.fillRect(-7, -7, 14, 14); ctx.restore();
+      for (let lane = 0; lane < scanLanes; lane++) {
+        const q = project(scanPoint(p, lane));
+        ctx.fillStyle = '#edffc9'; ctx.beginPath(); ctx.arc(q.x, q.y, 3.5, 0, Math.PI * 2); ctx.fill();
+      }
+      ctx.globalAlpha = 1;
+    }
+  }
+  angleLabel.textContent = Math.round(p * 100) + '% scanned';
 }
-slider.addEventListener('input', drawScan);
+function settleScan() {
+  cancelAnimationFrame(scanFrame); scanFrame = 0; scanLastTime = 0;
+  scanProgress = scanTarget; drawScan();
+}
+function animateScan(now) {
+  const dt = scanLastTime ? Math.min(40, now - scanLastTime) : 16;
+  scanLastTime = now;
+  scanProgress += (scanTarget - scanProgress) * (1 - Math.exp(-dt / 65));
+  if (Math.abs(scanTarget - scanProgress) < .00008) { settleScan(); return; }
+  drawScan(); scanFrame = requestAnimationFrame(animateScan);
+}
+function updateScan(animate = true) {
+  scanTarget = Number(slider.value) / 360;
+  slider.setAttribute('aria-valuetext', Math.round(scanTarget * 100) + ' percent scanned; six spiral turns, four rows at a time');
+  if (!animate || reduced.matches) settleScan();
+  else if (!scanFrame) { scanLastTime = 0; scanFrame = requestAnimationFrame(animateScan); }
+}
+slider.addEventListener('input', () => updateScan());
 slider.addEventListener('change', () => updateURL('sweep', slider.value));
 
 // The display study uses example values; it never reads account data.
@@ -185,6 +242,7 @@ function setQuota(state, sync = true) {
   // the current frame, even when a previous transition is interrupted.
   if (!sync || reduced.matches || Math.abs(quotaTarget - startValue) < .001) {
     finishQuota();
+    settleScan();
     return;
   }
   const startTime = performance.now();
@@ -211,7 +269,7 @@ function restoreURLState() {
   const rawSweep = params.get('sweep');
   const sweep = rawSweep === null ? 180 : Number(rawSweep);
   slider.value = Number.isFinite(sweep) ? Math.max(0, Math.min(360, Math.round(sweep))) : 180;
-  drawScan();
+  updateScan(false);
   for (const disclosure of disclosures) disclosure.set(params.get(disclosure.key) === '1', { animate: false, sync: false });
 }
 restoreURLState();
@@ -277,6 +335,7 @@ document.querySelectorAll('.hero h1 span').forEach((el, i) => entrance(el,
 reduced.addEventListener('change', () => {
   if (reduced.matches) {
     finishQuota();
+    settleScan();
     for (const disclosure of disclosures) disclosure.settle(disclosure.expanded);
     for (const animation of motionAnimations) animation.cancel();
     motionAnimations.clear();

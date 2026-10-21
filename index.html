@@ -14,8 +14,8 @@
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
   <link rel="preload" href="assets/anton.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261019-quota-motion">
-  <script src="script.js?v=20261019-quota-motion" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261020-spiral-scan">
+  <script src="script.js?v=20261020-spiral-scan" defer></script>
 </head>
 <body>
 <a class="skip" href="#work">Skip to work</a>
@@ -44,10 +44,10 @@
         <figure class="platform-photo"><img src="assets/macro-photograph-of-the-rp2350-microcontroller-on.jpg" width="1920" height="1440" alt="The RP2350 chip at the center of a Raspberry Pi Pico 2 board" loading="lazy" decoding="async"><figcaption>Platform reference: Raspberry Pi Pico 2.</figcaption></figure>
       </div>
       <div class="scanner-stage" data-ui>
-        <div class="stage-top"><span>Scan concept</span><span id="scan-angle">180° sweep</span></div>
-        <canvas id="scan-canvas" width="900" height="660" role="img" aria-label="Conceptual scan path around a sample object. This illustration is not measured scan data.">The planned scanner rotates a sample past a distance sensor, then combines measurements at different heights into a point cloud.</canvas>
-        <div class="scan-controls"><label for="sweep">Explore the sweep</label><input id="sweep" name="sweep" type="range" min="0" max="360" value="180" step="1" aria-describedby="scan-caption"></div>
-        <p class="scan-fallback">The concept uses a rotating platform, a fixed distance sensor, and manual height adjustment.</p><p id="scan-caption">An illustration of the planned scan path, not measured data.</p>
+        <div class="stage-top"><span>Scan concept</span><span id="scan-angle">50% scanned</span></div>
+        <canvas id="scan-canvas" width="900" height="660" role="img" aria-label="Conceptual four-row spiral scan around a sample object. Use the slider to reveal the point cloud from bottom to top. This is not measured scan data.">The planned scanner rotates a sample past a distance sensor, then combines measurements at different heights into a point cloud.</canvas>
+        <div class="scan-controls"><label for="sweep">Explore the scan</label><input id="sweep" name="sweep" type="range" min="0" max="360" value="180" step="1" aria-describedby="scan-caption"></div>
+        <p class="scan-fallback">The concept uses a rotating platform, a fixed distance sensor, and manual height adjustment.</p><p id="scan-caption">Drag to scan upward in a four-row spiral. Illustrative only; the prototype measures individual height layers.</p>
       </div>
     </article>
 
