@@ -316,8 +316,9 @@ if ('IntersectionObserver' in window) {
   const observer = new IntersectionObserver(entries => {
     for (const entry of entries) {
       if (!entry.isIntersecting) continue;
-      entrance(entry.target,
-        [{ transform: 'translateY(22px)', opacity: .55 }, { transform: 'translateY(0)', opacity: 1 }],
+      // Content visible on arrival must never restart an entrance after paint.
+      if (entry.target.dataset.scrollEntrance === 'true') entrance(entry.target,
+        [{ opacity: .55 }, { opacity: 1 }],
         { duration: 920, easing: 'cubic-bezier(.16,1,.3,1)', delay: Number(entry.target.dataset.delay || 0) }
       );
       observer.unobserve(entry.target);
@@ -325,13 +326,10 @@ if ('IntersectionObserver' in window) {
   }, { threshold: .1 });
   document.querySelectorAll('.platform-photo,.demo-heading,.demo-styles,.quota-window,.demo-scenarios,.demo-status,.section-intro h2,.section-intro>p,.project-index a,.project-copy h3,.project-subtitle,.project-copy>p:not(.project-subtitle),.project-facts,.project-link,.scanner-stage,.codex-demo,.about-columns p,.contact h2,.contact-row p,.contact-row a,.footer-name').forEach((el, i) => {
     el.dataset.delay = String((i % 3) * 65);
+    el.dataset.scrollEntrance = String(el.getBoundingClientRect().top >= window.innerHeight);
     observer.observe(el);
   });
 }
-document.querySelectorAll('.hero h1 span').forEach((el, i) => entrance(el,
-  [{ transform: 'translateY(75px)' }, { transform: 'translateY(0)' }],
-  { duration: 900, delay: i * 90, easing: 'cubic-bezier(.16,1,.3,1)' }
-));
 reduced.addEventListener('change', () => {
   if (reduced.matches) {
     finishQuota();
