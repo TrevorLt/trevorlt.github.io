@@ -304,39 +304,12 @@ window.addEventListener('pageshow', measureHero);
 measureHero();
 document.fonts.ready.then(measureHero);
 
-// The page stays readable before JavaScript. Entrances are short and optional.
-const motionAnimations = new Set();
-function entrance(element, frames, options) {
-  if (reduced.matches) return;
-  const animation = element.animate(frames, options);
-  motionAnimations.add(animation);
-  animation.finished.then(() => motionAnimations.delete(animation), () => motionAnimations.delete(animation));
-}
-if ('IntersectionObserver' in window) {
-  const observer = new IntersectionObserver(entries => {
-    for (const entry of entries) {
-      if (!entry.isIntersecting) continue;
-      // Content visible on arrival must never restart an entrance after paint.
-      if (entry.target.dataset.scrollEntrance === 'true') entrance(entry.target,
-        [{ opacity: .55 }, { opacity: 1 }],
-        { duration: 920, easing: 'cubic-bezier(.16,1,.3,1)', delay: Number(entry.target.dataset.delay || 0) }
-      );
-      observer.unobserve(entry.target);
-    }
-  }, { threshold: .1 });
-  document.querySelectorAll('.platform-photo,.demo-heading,.demo-styles,.quota-window,.demo-scenarios,.demo-status,.section-intro h2,.section-intro>p,.project-index a,.project-copy h3,.project-subtitle,.project-copy>p:not(.project-subtitle),.project-facts,.project-link,.scanner-stage,.codex-demo,.about-columns p,.contact h2,.contact-row p,.contact-row a,.footer-name').forEach((el, i) => {
-    el.dataset.delay = String((i % 3) * 65);
-    el.dataset.scrollEntrance = String(el.getBoundingClientRect().top >= window.innerHeight);
-    observer.observe(el);
-  });
-}
+// Sections render at full opacity from first paint; animate only user interactions.
 reduced.addEventListener('change', () => {
   if (reduced.matches) {
     finishQuota();
     settleScan();
     for (const disclosure of disclosures) disclosure.settle(disclosure.expanded);
-    for (const animation of motionAnimations) animation.cancel();
-    motionAnimations.clear();
   }
   queueHero();
 });
