@@ -1,7 +1,7 @@
 'use strict';
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-const urlDefaults = { display: 'rings', quota: 'normal', sweep: '180', scanner: '0', contribution: '0' };
+const urlDefaults = { display: 'rings', quota: 'normal', sweep: '0', scanner: '0', contribution: '0' };
 function updateURL(key, value) {
   const url = new URL(window.location.href);
   if (String(value) === urlDefaults[key]) url.searchParams.delete(key);
@@ -83,7 +83,7 @@ const canvas = document.querySelector('#scan-canvas');
 const slider = document.querySelector('#sweep');
 const angleLabel = document.querySelector('#scan-angle');
 const scanTurns = 6, scanLanes = 4, scanSamples = scanTurns * 96;
-let scanProgress = .5, scanTarget = .5, scanFrame = 0, scanLastTime = 0;
+let scanProgress = 0, scanTarget = 0, scanFrame = 0, scanLastTime = 0;
 // Four adjacent helical sampling tracks are an illustrative reveal, not a
 // claim that the single-sensor prototype captures four physical rows at once.
 function scanPoint(t, lane) {
@@ -267,8 +267,8 @@ function restoreURLState() {
   setDisplay(params.get('display'), false);
   setQuota(params.get('quota'), false);
   const rawSweep = params.get('sweep');
-  const sweep = rawSweep === null ? 180 : Number(rawSweep);
-  slider.value = Number.isFinite(sweep) ? Math.max(0, Math.min(360, Math.round(sweep))) : 180;
+  const sweep = rawSweep === null ? 0 : Number(rawSweep);
+  slider.value = Number.isFinite(sweep) ? Math.max(0, Math.min(360, Math.round(sweep))) : 0;
   updateScan(false);
   for (const disclosure of disclosures) disclosure.set(params.get(disclosure.key) === '1', { animate: false, sync: false });
 }

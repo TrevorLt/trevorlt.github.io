@@ -15,8 +15,8 @@
   <link rel="preload" href="assets/anton.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans-semibold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261023-no-flash">
-  <script src="script.js?v=20261023-no-flash" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261024-scan-zero">
+  <script src="script.js?v=20261024-scan-zero" defer></script>
   <noscript><style>.scanner-stage canvas,.scanner-stage .scan-controls,.codex-demo .demo-styles,.codex-demo .demo-scenarios{display:none}.scanner-stage .scan-fallback{display:block}</style></noscript>
 </head>
 <body>
@@ -46,9 +46,9 @@
         <figure class="platform-photo"><img src="assets/macro-photograph-of-the-rp2350-microcontroller-on.jpg" width="1920" height="1440" alt="The RP2350 chip at the center of a Raspberry Pi Pico 2 board" loading="lazy" decoding="async"><figcaption>Platform reference: Raspberry Pi Pico 2.</figcaption></figure>
       </div>
       <div class="scanner-stage" data-ui>
-        <div class="stage-top"><span>Scan concept</span><span id="scan-angle">50% scanned</span></div>
+        <div class="stage-top"><span>Scan concept</span><span id="scan-angle">0% scanned</span></div>
         <canvas id="scan-canvas" width="900" height="660" role="img" aria-label="Conceptual four-row spiral scan around a sample object. Use the slider to reveal the point cloud from bottom to top. This is not measured scan data.">The planned scanner rotates a sample past a distance sensor, then combines measurements at different heights into a point cloud.</canvas>
-        <div class="scan-controls"><label for="sweep">Explore the scan</label><input id="sweep" name="sweep" type="range" min="0" max="360" value="180" step="1" aria-describedby="scan-caption"></div>
+        <div class="scan-controls"><label for="sweep">Explore the scan</label><input id="sweep" name="sweep" type="range" min="0" max="360" value="0" step="1" aria-describedby="scan-caption"></div>
         <p class="scan-fallback">The concept uses a rotating platform, a fixed distance sensor, and manual height adjustment.</p><p id="scan-caption">For illustration purposes only.</p>
       </div>
     </article>
