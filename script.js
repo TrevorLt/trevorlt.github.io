@@ -224,10 +224,11 @@ function renderQuota(value) {
   quotaUI.number.textContent = prefix + rounded;
   quotaUI.readout.textContent = prefix + rounded + '%';
   quotaUI.title.textContent = '5-hour window: ' + rounded + ' percent remaining' + (stale ? ', last known reading' : '');
-  // Illustrative duration-normalized coupling, NOT an actual plan quota ratio.
+  // Demo assumption: one full 5-hour allowance is 17.5% of a weekly allowance.
+  // Midpoint of the user-supplied 15–20% range, not an asserted plan limit.
   // Both windows derive from the same animated value, including reversals.
-  const weekly = 54 + (value - 72) * 5 / (7 * 24);
-  const weeklyLabel = Number(weekly.toFixed(1)).toString();
+  const weekly = 54 + (value - 72) * .175;
+  const weeklyLabel = String(Math.round(weekly));
   quotaUI.weeklyRing.setAttribute('stroke-dasharray', weekly.toFixed(3) + ' 100');
   quotaUI.weeklyFill.style.transform = 'scaleX(' + weekly / 100 + ')';
   quotaUI.weeklyNumber.textContent = prefix + weeklyLabel;
