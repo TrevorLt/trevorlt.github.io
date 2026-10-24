@@ -195,6 +195,11 @@ const quotaUI = {
   title: document.querySelector('#five-hour-title'),
   readout: document.querySelector('#readout-five-hour'),
   fill: document.querySelector('#readout-fill'),
+  weeklyRing: document.querySelector('#weekly-ring'),
+  weeklyNumber: document.querySelector('#weekly-number'),
+  weeklyTitle: document.querySelector('#weekly-title'),
+  weeklyReadout: document.querySelector('#readout-weekly'),
+  weeklyFill: document.querySelector('#readout-weekly-fill'),
   status: document.querySelector('#demo-status')
 };
 const quotaStyle = getComputedStyle(codexDemo);
@@ -219,6 +224,15 @@ function renderQuota(value) {
   quotaUI.number.textContent = prefix + rounded;
   quotaUI.readout.textContent = prefix + rounded + '%';
   quotaUI.title.textContent = '5-hour window: ' + rounded + ' percent remaining' + (stale ? ', last known reading' : '');
+  // Illustrative duration-normalized coupling, NOT an actual plan quota ratio.
+  // Both windows derive from the same animated value, including reversals.
+  const weekly = 54 + (value - 72) * 5 / (7 * 24);
+  const weeklyLabel = Number(weekly.toFixed(1)).toString();
+  quotaUI.weeklyRing.setAttribute('stroke-dasharray', weekly.toFixed(3) + ' 100');
+  quotaUI.weeklyFill.style.transform = 'scaleX(' + weekly / 100 + ')';
+  quotaUI.weeklyNumber.textContent = prefix + weeklyLabel;
+  quotaUI.weeklyReadout.textContent = prefix + weeklyLabel + '%';
+  quotaUI.weeklyTitle.textContent = 'Weekly window: ' + weeklyLabel + ' percent remaining' + (stale ? ', last known reading' : '');
 }
 function finishQuota() {
   cancelAnimationFrame(quotaFrame);

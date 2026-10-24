@@ -15,8 +15,8 @@
   <link rel="preload" href="assets/anton.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans-semibold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261024-scan-zero">
-  <script src="script.js?v=20261024-scan-zero" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261024-linked-quotas">
+  <script src="script.js?v=20261024-linked-quotas" defer></script>
   <noscript><style>.scanner-stage canvas,.scanner-stage .scan-controls,.codex-demo .demo-styles,.codex-demo .demo-scenarios{display:none}.scanner-stage .scan-fallback{display:block}</style></noscript>
 </head>
 <body>
@@ -67,13 +67,13 @@
               <p>5-hour window</p>
             </div>
             <div class="quota-window">
-              <svg viewBox="0 0 220 220" role="img" aria-labelledby="weekly-title"><title id="weekly-title">Weekly window: 54 percent remaining</title><circle class="ring-track" cx="110" cy="110" r="91"/><circle class="ring-value" cx="110" cy="110" r="91" pathLength="100" stroke-dasharray="54 100"/><text class="ring-number" x="110" y="125" text-anchor="middle">54</text><text class="ring-unit" x="110" y="154" text-anchor="middle">% left</text></svg>
+              <svg viewBox="0 0 220 220" role="img" aria-labelledby="weekly-title"><title id="weekly-title">Weekly window: 54 percent remaining</title><circle class="ring-track" cx="110" cy="110" r="91"/><circle id="weekly-ring" class="ring-value" cx="110" cy="110" r="91" pathLength="100" stroke-dasharray="54 100"/><text id="weekly-number" class="ring-number" x="110" y="125" text-anchor="middle">54</text><text class="ring-unit" x="110" y="154" text-anchor="middle">% left</text></svg>
               <p>Weekly window</p>
             </div>
           </div>
           <div class="quota-readout" id="quota-readout" hidden>
             <div><div class="readout-line"><span>5-hour window</span><strong id="readout-five-hour">72%</strong></div><div class="readout-track"><span id="readout-fill" style="transform:scaleX(.72)"></span></div></div>
-            <div><div class="readout-line"><span>Weekly window</span><strong>54%</strong></div><div class="readout-track"><span style="transform:scaleX(.54)"></span></div></div>
+            <div><div class="readout-line"><span>Weekly window</span><strong id="readout-weekly">54%</strong></div><div class="readout-track"><span id="readout-weekly-fill" style="transform:scaleX(.54)"></span></div></div>
           </div>
         </div>
         <div class="demo-scenarios" role="group" aria-label="Preview quota state"><button type="button" data-quota="normal" aria-pressed="true">Plenty left</button><button type="button" data-quota="low" aria-pressed="false">Running low</button><button type="button" data-quota="stale" aria-pressed="false">Last known</button></div>
