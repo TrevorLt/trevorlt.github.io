@@ -245,7 +245,9 @@ function setQuota(state, sync = true) {
   cancelAnimationFrame(quotaFrame);
   quotaFrame = 0;
   quotaState = state;
-  quotaTarget = state === 'low' ? 12 : 72;
+  // Last known changes only the freshness marker. Freeze the current reading
+  // instead of resetting it to the Plenty left value.
+  quotaTarget = state === 'stale' ? quotaValue : state === 'low' ? 12 : 72;
   const startValue = quotaValue;
   renderQuota(startValue);
   quotaUI.status.textContent = state === 'low'
