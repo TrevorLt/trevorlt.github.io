@@ -1,0 +1,99 @@
+<!doctype html>
+<meta charset="utf-8">
+<title>Portfolio regression checks</title>
+<h1>Portfolio regression checks</h1>
+<pre id="results">Running…</pre>
+<iframe title="Portfolio under test" style="width:100%;height:600px"></iframe>
+<script type="module">
+const frame = document.querySelector('iframe');
+const results = document.querySelector('#results');
+const checks = [];
+const $ = selector => frame.contentDocument.querySelector(selector);
+const check = (condition, message) => {
+  if (!condition) throw new Error(message);
+  checks.push('PASS ' + message);
+};
+async function load(url = '../') {
+  await new Promise(resolve => {
+    frame.onload = resolve;
+    frame.src = url;
+  });
+}
+async function until(predicate) {
+  const deadline = performance.now() + 4000;
+  while (!predicate()) {
+    if (performance.now() > deadline) throw new Error('Timed out waiting for the page');
+    await new Promise(resolve => setTimeout(resolve, 20));
+  }
+}
+function sameReadings() {
+  check($('#five-hour-number').textContent + '%' === $('#readout-five-hour').textContent,
+    '5-hour ring and readout agree');
+  check($('#weekly-number').textContent + '%' === $('#readout-weekly').textContent,
+    'Weekly ring and readout agree');
+}
+try {
+  await load();
+  $('[data-quota="low"]').click();
+  await until(() => $('#readout-five-hour').textContent === '12%');
+  $('[data-quota="stale"]').click();
+  const frozen = $('#readout-five-hour').textContent;
+  const weekly = $('#readout-weekly').textContent;
+  const shared = frame.contentWindow.location.href;
+  check(frozen === '~12%', 'Last known freezes the low reading');
+  sameReadings();
+  await load(shared);
+  check($('#readout-five-hour').textContent === frozen, 'Reload preserves the frozen reading');
+  check($('#readout-weekly').textContent === weekly, 'Reload preserves the weekly reading');
+  $('[data-display="readout"]').click();
+  check($('#quota-rings').hidden && !$('#quota-readout').hidden, 'Large readout switches displays');
+  $('[data-display="rings"]').click();
+  check(!$('#quota-rings').hidden && $('#quota-readout').hidden, 'Double ring switches displays');
+  $('[data-quota="normal"]').click();
+  check(!new URL(frame.contentWindow.location.href).searchParams.has('quotaValue'),
+    'Leaving stale mode removes its saved value');
+  await until(() => $('#readout-five-hour').textContent === '72%');
+  $('[data-quota="low"]').click();
+  await until(() => Number($('#readout-five-hour').textContent.slice(0, -1)) < 65);
+  $('[data-quota="stale"]').click();
+  const interrupted = $('#five-hour-ring').getAttribute('stroke-dasharray');
+  await load(frame.contentWindow.location.href);
+  check($('#five-hour-ring').getAttribute('stroke-dasharray') === interrupted,
+    'Freezing an interrupted animation survives reload');
+  sameReadings();
+  for (const value of ['', ' ', 'nope', 'Infinity', '-1', '101']) {
+    await load('../?quota=stale&quotaValue=' + encodeURIComponent(value));
+    check($('#readout-five-hour').textContent === '~72%', 'Reject invalid saved value: ' + JSON.stringify(value));
+  }
+  for (const value of ['0', '100', '23.456']) {
+    await load('../?quota=stale&quotaValue=' + value);
+    check($('#readout-five-hour').textContent === '~' + Math.round(Number(value)) + '%',
+      'Restore valid saved value: ' + value);
+  }
+  await load('../?quota=stale');
+  check($('#readout-five-hour').textContent === '~72%', 'Old stale links keep the default');
+  await load('../?quota=low&quotaValue=99&sweep=bad&display=bad');
+  check($('#readout-five-hour').textContent === '12%', 'Ignore saved values outside stale mode');
+  check($('#scan-angle').textContent === '0% scanned' && !$('#quota-rings').hidden,
+    'Invalid scan and display values use defaults');
+  for (const selector of ['#scanner-details', '#contribution-details']) {
+    const summary = $(selector + ' summary');
+    summary.click();
+    summary.click();
+    summary.click();
+    await until(() => $(selector).open && !$(selector).style.height);
+    check(summary.getAttribute('aria-expanded') === 'true' && !$(selector + ' .project-detail').inert,
+      selector + ' survives rapid open/close/open');
+    summary.click();
+    await until(() => !$(selector).open);
+    check(summary.getAttribute('aria-expanded') === 'false' && $(selector + ' .project-detail').inert,
+      selector + ' closes and disables hidden content');
+  }
+  document.title = 'PASS — Portfolio regression checks';
+  results.textContent = checks.join('\n');
+} catch (error) {
+  document.title = 'FAIL — Portfolio regression checks';
+  results.textContent = checks.join('\n') + '\nFAIL ' + error.message;
+  console.error(error);
+}
+</script>

@@ -12,6 +12,10 @@ python3 -m http.server 4173
 
 Open http://localhost:4173. Edit `index.html`, `styles.css` and `script.js`. Fonts and images are hosted locally. The scan illustration is procedural and does not represent measured results. The Codex display study uses illustrative values and provides double-ring, large-readout and quota-state controls.
 
+## Regression checks
+
+With the preview server running, open http://localhost:4173/tests/browser.html. The page runs browser checks for saved quota values, both displays, interrupted animations, invalid URL values, and rapid disclosure reversals. It shows PASS or FAIL and needs no dependencies.
+
 ## Credits
 
 - Codex Usage Status app icon: [TrevorLt/codex-usage-status](https://github.com/TrevorLt/codex-usage-status), MIT. The application continues the original work of [tollenceld](https://github.com/tollenceld/codex-usage-status).

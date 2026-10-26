@@ -4,7 +4,7 @@ const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
 const urlDefaults = { display: 'rings', quota: 'normal', sweep: '0', scanner: '0', contribution: '0' };
 function updateURL(key, value) {
   const url = new URL(window.location.href);
-  if (String(value) === urlDefaults[key]) url.searchParams.delete(key);
+  if (value === null || String(value) === urlDefaults[key]) url.searchParams.delete(key);
   else url.searchParams.set(key, String(value));
   if (url.href !== window.location.href) history.replaceState(history.state, '', url);
 }
@@ -101,7 +101,6 @@ function drawScan() {
   if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
-  canvas.closest('.scanner-stage').classList.add('is-interactive');
   const w = canvas.width, h = canvas.height, p = scanProgress;
   const project = ({ x, y, z }) => ({ x: w * .5 + (x * .89 - z * .46) * 1.25, y: h * .55 + (x * .22 + z * .4 - y) * 1.25, depth: x * .46 + z * .89 });
   ctx.clearRect(0, 0, w, h);
@@ -179,7 +178,6 @@ slider.addEventListener('change', () => updateURL('sweep', slider.value));
 
 // The display study uses example values; it never reads account data.
 const codexDemo = document.querySelector('.codex-demo');
-codexDemo.classList.add('is-interactive');
 const displayButtons = [...document.querySelectorAll('[data-display]')];
 const quotaButtons = [...document.querySelectorAll('[data-quota]')];
 function setDisplay(mode, sync = true) {
@@ -254,7 +252,10 @@ function setQuota(state, sync = true) {
     ? '12% remains in the 5-hour window. A warning appears below 20%.'
     : state === 'stale' ? 'Last-known values stay visible when a refresh fails.' : 'Two windows. One glance.';
   for (const button of quotaButtons) button.setAttribute('aria-pressed', String(button.dataset.quota === state));
-  if (sync) updateURL('quota', state);
+  if (sync) {
+    updateURL('quota', state);
+    updateURL('quotaValue', state === 'stale' ? quotaTarget : null);
+  }
   // Loading a shared state is immediate. User-triggered changes animate from
   // the current frame, even when a previous transition is interrupted.
   if (!sync || reduced.matches || Math.abs(quotaTarget - startValue) < .001) {
@@ -282,6 +283,9 @@ for (const button of quotaButtons) button.addEventListener('click', () => setQuo
 function restoreURLState() {
   const params = new URL(window.location.href).searchParams;
   setDisplay(params.get('display'), false);
+  const savedValue = Number(params.get('quotaValue')?.trim() || NaN);
+  quotaValue = params.get('quota') === 'stale' && Number.isFinite(savedValue) && savedValue >= 0 && savedValue <= 100
+    ? savedValue : 72;
   setQuota(params.get('quota'), false);
   const rawSweep = params.get('sweep');
   const sweep = rawSweep === null ? 0 : Number(rawSweep);
