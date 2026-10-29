@@ -76,10 +76,19 @@ try {
   check($('#readout-weekly').textContent === '54%' && !$('.codex-demo').classList.contains('is-recharging'),
     'Plenty left restores its example values after recharge');
   recharge.click();
-  await until(() => Number($('#readout-five-hour').textContent.slice(0, -1)) > 72);
+  await until(() => $('#readout-five-hour').textContent === '100%' && $('#readout-weekly').textContent === '100%'
+    && !$('.codex-demo').classList.contains('is-recharging'));
+  const fullStatus = $('#demo-status').textContent;
   $('[data-display="readout"]').click();
-  check($('#readout-five-hour').textContent === '72%' && $('#readout-weekly').textContent === '54%'
-    && !$('.codex-demo').classList.contains('is-recharging'), 'Switching display cancels recharge at its example values');
+  $('[data-display="rings"]').click();
+  check($('#five-hour-number').textContent === '100' && $('#weekly-number').textContent === '100'
+    && $('#demo-status').textContent === fullStatus && $('[data-quota="normal"]').getAttribute('aria-pressed') === 'true',
+    'Switching displays preserves full readings and the selected scenario');
+  check($('#five-hour-ring').getAttribute('stroke-dasharray') === 'none'
+    && $('#weekly-ring').getAttribute('stroke-dasharray') === 'none', 'Full rings have no start/end seam');
+  $('[data-display="readout"]').click();
+  check($('#readout-five-hour').textContent === '100%' && $('#readout-weekly').textContent === '100%'
+    && $('#demo-status').textContent === fullStatus, 'Readout inherits both full values without other changes');
   $('[data-display="rings"]').click();
   $('[data-quota="low"]').click();
   await until(() => $('#readout-five-hour').textContent === '12%');

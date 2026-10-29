@@ -181,7 +181,6 @@ const codexDemo = document.querySelector('.codex-demo');
 const displayButtons = [...document.querySelectorAll('[data-display]')];
 const quotaButtons = [...document.querySelectorAll('[data-quota]')];
 function setDisplay(mode, sync = true) {
-  if (quotaIsRecharged) setQuota(quotaState, false);
   const rings = mode !== 'readout';
   document.querySelector('#quota-rings').hidden = !rings;
   document.querySelector('#quota-readout').hidden = rings;
@@ -218,7 +217,7 @@ function renderQuota(value, weekly = 54 + (value - 72) * .175) {
   const warning = Math.max(0, Math.min(1, (20 - value) / 8));
   const blend = warning * warning * (3 - 2 * warning);
   const color = 'rgb(' + quotaGreen.map((channel, i) => Math.round(channel + (quotaRed[i] - channel) * blend)).join(', ') + ')';
-  quotaUI.ring.setAttribute('stroke-dasharray', value.toFixed(3) + ' 100');
+  quotaUI.ring.setAttribute('stroke-dasharray', value >= 100 ? 'none' : value.toFixed(3) + ' 100');
   quotaUI.ring.style.stroke = color;
   quotaUI.fill.style.transform = 'scaleX(' + value / 100 + ')';
   quotaUI.fill.style.backgroundColor = color;
@@ -229,7 +228,7 @@ function renderQuota(value, weekly = 54 + (value - 72) * .175) {
   // Midpoint of the user-supplied 15–20% range, not an asserted plan limit.
   // Both windows derive from the same animated value, including reversals.
   const weeklyLabel = String(Math.round(weekly));
-  quotaUI.weeklyRing.setAttribute('stroke-dasharray', weekly.toFixed(3) + ' 100');
+  quotaUI.weeklyRing.setAttribute('stroke-dasharray', weekly >= 100 ? 'none' : weekly.toFixed(3) + ' 100');
   quotaUI.weeklyFill.style.transform = 'scaleX(' + weekly / 100 + ')';
   quotaUI.weeklyNumber.textContent = prefix + weeklyLabel;
   quotaUI.weeklyReadout.textContent = prefix + weeklyLabel + '%';
