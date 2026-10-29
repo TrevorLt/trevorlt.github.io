@@ -15,8 +15,8 @@
   <link rel="preload" href="assets/anton.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans-semibold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261025-stale-value">
-  <script src="script.js?v=20261026-stale-url" defer></script>
+  <link rel="stylesheet" href="styles.css?v=20261028-recharge">
+  <script src="script.js?v=20261028-recharge" defer></script>
   <noscript><style>.scanner-stage canvas,.scanner-stage .scan-controls,.codex-demo .demo-styles,.codex-demo .demo-scenarios{display:none}.scanner-stage .scan-fallback{display:block}</style></noscript>
 </head>
 <body>
@@ -45,7 +45,7 @@
         <details id="scanner-details"><summary aria-controls="scanner-detail-content">Inside the project</summary><div class="project-detail" id="scanner-detail-content"><p>The planned motion system pairs a StepperOnline 17HE08-1004S NEMA 17 stepper motor with an HR4988SQ-based driver board to rotate the object. A manually adjustable sensor carriage provides measurements at multiple heights.</p><p>I’m developing CryptScan through DSGN 297. The current work focuses on VL53L1X sensor integration, CircuitPython distance acquisition, and USB serial output to a computer. The planned reconstruction pipeline combines distance, commanded rotation angle, and sensor height into 3D coordinates for point-cloud visualization and PLY export.</p><p>The prototype targets coarse, recognizable geometry. Motor integration and multilayer reconstruction remain in development; a complete 3D scan has not yet been demonstrated.</p></div></details>
         <figure class="platform-photo"><img src="assets/macro-photograph-of-the-rp2350-microcontroller-on.jpg" width="1920" height="1440" alt="The RP2350 chip at the center of a Raspberry Pi Pico 2 board" loading="lazy" decoding="async"><figcaption>Platform reference: Raspberry Pi Pico 2.</figcaption></figure>
       </div>
-      <div class="scanner-stage">
+      <div class="scanner-stage" data-ui>
         <div class="stage-top"><span>Scan concept</span><span id="scan-angle">0% scanned</span></div>
         <canvas id="scan-canvas" width="900" height="660" role="img" aria-label="Conceptual four-row spiral scan around a sample object. Use the slider to reveal the point cloud from bottom to top. This is not measured scan data.">The planned scanner rotates a sample past a distance sensor, then combines measurements at different heights into a point cloud.</canvas>
         <div class="scan-controls"><label for="sweep">Explore the scan</label><input id="sweep" name="sweep" type="range" min="0" max="360" value="0" step="1" aria-describedby="scan-caption"></div>
@@ -54,8 +54,8 @@
     </article>
 
     <article class="project codex-project" id="codex" aria-labelledby="codex-title">
-      <div class="codex-demo">
-        <div class="demo-heading"><img src="assets/codex-icon.png" width="256" height="256" alt="" loading="lazy"><span translate="no">Codex Usage Status</span></div>
+      <div class="codex-demo" data-ui>
+        <div class="demo-heading"><img src="assets/codex-icon.png" width="256" height="256" alt="" loading="lazy"><span translate="no">Codex Usage Status</span><button class="recharge-button" type="button" aria-label="Replay recharge animation" title="Replay recharge animation" aria-controls="quota-display"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.9-3M4 4v4h4m-4 5a8 8 0 0 0 14.9 3M20 20v-4h-4"/></svg></button></div>
         <div class="demo-styles" role="group" aria-label="Preview display style">
           <button type="button" data-display="rings" aria-controls="quota-display" aria-pressed="true">Double ring</button>
           <button type="button" data-display="readout" aria-controls="quota-display" aria-pressed="false">Large readout</button>

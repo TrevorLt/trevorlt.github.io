@@ -14,7 +14,7 @@ Open http://localhost:4173. Edit `index.html`, `styles.css` and `script.js`. Fon
 
 ## Regression checks
 
-With the preview server running, open http://localhost:4173/tests/browser.html. The page runs browser checks for saved quota values, both displays, interrupted animations, invalid URL values, and rapid disclosure reversals. It shows PASS or FAIL and needs no dependencies.
+With the preview server running, open http://localhost:4173/tests/browser.html. The page checks saved quota values, recharge and mode switching, both displays, interrupted animations, invalid URL values, and rapid disclosure reversals. It shows PASS or FAIL and needs no dependencies.
 
 ## Credits
 

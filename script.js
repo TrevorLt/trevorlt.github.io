@@ -181,6 +181,7 @@ const codexDemo = document.querySelector('.codex-demo');
 const displayButtons = [...document.querySelectorAll('[data-display]')];
 const quotaButtons = [...document.querySelectorAll('[data-quota]')];
 function setDisplay(mode, sync = true) {
+  if (quotaIsRecharged) setQuota(quotaState, false);
   const rings = mode !== 'readout';
   document.querySelector('#quota-rings').hidden = !rings;
   document.querySelector('#quota-readout').hidden = rings;
@@ -204,9 +205,11 @@ const quotaStyle = getComputedStyle(codexDemo);
 const rgbFromHex = hex => hex.trim().replace('#', '').match(/.{2}/g).map(value => parseInt(value, 16));
 const quotaGreen = rgbFromHex(quotaStyle.getPropertyValue('--demo-accent'));
 const quotaRed = rgbFromHex(quotaStyle.getPropertyValue('--demo-warning'));
-let quotaValue = 72, quotaTarget = 72, quotaState = 'normal', quotaFrame = 0;
-function renderQuota(value) {
+let quotaValue = 72, quotaWeeklyValue = 54, quotaTarget = 72, quotaWeeklyTarget = 54;
+let quotaState = 'normal', quotaModeValue = 72, quotaIsRecharged = false, quotaFrame = 0;
+function renderQuota(value, weekly = 54 + (value - 72) * .175) {
   quotaValue = value;
+  quotaWeeklyValue = weekly;
   const rounded = Math.round(value);
   const stale = quotaState === 'stale';
   const prefix = stale ? '~' : '';
@@ -225,7 +228,6 @@ function renderQuota(value) {
   // Demo assumption: one full 5-hour allowance is 17.5% of a weekly allowance.
   // Midpoint of the user-supplied 15–20% range, not an asserted plan limit.
   // Both windows derive from the same animated value, including reversals.
-  const weekly = 54 + (value - 72) * .175;
   const weeklyLabel = String(Math.round(weekly));
   quotaUI.weeklyRing.setAttribute('stroke-dasharray', weekly.toFixed(3) + ' 100');
   quotaUI.weeklyFill.style.transform = 'scaleX(' + weekly / 100 + ')';
@@ -236,56 +238,72 @@ function renderQuota(value) {
 function finishQuota() {
   cancelAnimationFrame(quotaFrame);
   quotaFrame = 0;
-  renderQuota(quotaTarget);
+  renderQuota(quotaTarget, quotaWeeklyTarget);
+  codexDemo.classList.remove('is-recharging');
+  if (quotaIsRecharged) quotaUI.status.textContent = 'Both usage windows are full in this example.';
 }
-function setQuota(state, sync = true) {
+function setQuota(state, sync = true, recharge = false) {
   if (!['normal', 'low', 'stale'].includes(state)) state = 'normal';
+  const wasAnimating = quotaFrame !== 0, wasRecharged = quotaIsRecharged;
   cancelAnimationFrame(quotaFrame);
   quotaFrame = 0;
+  if (state !== 'stale') quotaModeValue = state === 'low' ? 12 : 72;
+  if (recharge && wasRecharged && !wasAnimating) {
+    quotaValue = quotaModeValue;
+    quotaWeeklyValue = 54 + (quotaModeValue - 72) * .175;
+  }
   quotaState = state;
-  // Last known changes only the freshness marker. Freeze the current reading
-  // instead of resetting it to the Plenty left value.
-  quotaTarget = state === 'stale' ? quotaValue : state === 'low' ? 12 : 72;
-  const startValue = quotaValue;
-  renderQuota(startValue);
-  quotaUI.status.textContent = state === 'low'
+  // Last known freezes the selected example reading, not the temporary recharge.
+  quotaTarget = recharge ? 100 : state === 'stale' && wasRecharged ? quotaModeValue : state === 'stale' ? quotaValue : state === 'low' ? 12 : 72;
+  quotaWeeklyTarget = recharge ? 100 : 54 + (quotaTarget - 72) * .175;
+  quotaIsRecharged = recharge;
+  if (recharge) codexDemo.classList.add('is-recharging');
+  else codexDemo.classList.remove('is-recharging');
+  const startValue = quotaValue, startWeekly = quotaWeeklyValue;
+  renderQuota(startValue, startWeekly);
+  quotaUI.status.textContent = recharge ? 'Recharging both usage windows.' : state === 'low'
     ? '12% remains in the 5-hour window. A warning appears below 20%.'
     : state === 'stale' ? 'Last-known values stay visible when a refresh fails.' : 'Two windows. One glance.';
   for (const button of quotaButtons) button.setAttribute('aria-pressed', String(button.dataset.quota === state));
   if (sync) {
     updateURL('quota', state);
-    updateURL('quotaValue', state === 'stale' ? quotaTarget : null);
+    updateURL('quotaValue', state === 'stale' && !recharge ? quotaTarget : null);
   }
   // Loading a shared state is immediate. User-triggered changes animate from
   // the current frame, even when a previous transition is interrupted.
-  if (!sync || reduced.matches || Math.abs(quotaTarget - startValue) < .001) {
+  if ((!sync && !recharge) || reduced.matches || (!recharge && Math.abs(quotaTarget - startValue) < .001)) {
     finishQuota();
-    settleScan();
     return;
   }
   const startTime = performance.now();
-  const duration = Math.max(420, 1300 * Math.abs(quotaTarget - startValue) / 60);
-  const target = quotaTarget;
+  const duration = recharge ? 920 : Math.max(420, 1300 * Math.abs(quotaTarget - startValue) / 60);
+  const target = quotaTarget, weeklyTarget = quotaWeeklyTarget;
   function tick(now) {
     const progress = Math.max(0, Math.min(1, (now - startTime) / duration));
-    const eased = progress < .5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2;
-    renderQuota(startValue + (target - startValue) * eased);
+    const eased = recharge ? 1 - (1 - progress) ** 3 : progress < .5 ? 4 * progress ** 3 : 1 - (-2 * progress + 2) ** 3 / 2;
+    renderQuota(startValue + (target - startValue) * eased, startWeekly + (weeklyTarget - startWeekly) * eased);
     if (progress < 1) quotaFrame = requestAnimationFrame(tick);
     else {
       quotaFrame = 0;
-      renderQuota(target);
+      renderQuota(target, weeklyTarget);
+      codexDemo.classList.remove('is-recharging');
+      if (recharge) quotaUI.status.textContent = 'Both usage windows are full in this example.';
     }
   }
   quotaFrame = requestAnimationFrame(tick);
 }
+document.querySelector('.recharge-button').addEventListener('click', () => setQuota(quotaState, false, true));
 for (const button of displayButtons) button.addEventListener('click', () => setDisplay(button.dataset.display));
 for (const button of quotaButtons) button.addEventListener('click', () => setQuota(button.dataset.quota));
 function restoreURLState() {
   const params = new URL(window.location.href).searchParams;
   setDisplay(params.get('display'), false);
   const savedValue = Number(params.get('quotaValue')?.trim() || NaN);
+  quotaIsRecharged = false;
   quotaValue = params.get('quota') === 'stale' && Number.isFinite(savedValue) && savedValue >= 0 && savedValue <= 100
     ? savedValue : 72;
+  quotaWeeklyValue = 54 + (quotaValue - 72) * .175;
+  quotaModeValue = quotaValue;
   setQuota(params.get('quota'), false);
   const rawSweep = params.get('sweep');
   const sweep = rawSweep === null ? 0 : Number(rawSweep);

@@ -49,7 +49,51 @@ try {
   check($('#quota-rings').hidden && !$('#quota-readout').hidden, 'Large readout switches displays');
   $('[data-display="rings"]').click();
   check(!$('#quota-rings').hidden && $('#quota-readout').hidden, 'Double ring switches displays');
+  const recharge = $('.recharge-button');
+  check(recharge.getAttribute('aria-label') === 'Replay recharge animation', 'Recharge control has an accessible name');
+  $('[data-quota="low"]').click();
+  await until(() => $('#readout-five-hour').textContent === '12%');
+  recharge.click();
+  check(new URL(frame.contentWindow.location.href).searchParams.get('quota') === 'low'
+    && !new URL(frame.contentWindow.location.href).searchParams.has('quotaValue'), 'Recharge stays a temporary preview');
+  const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (!reducedMotion) {
+    await until(() => Number($('#readout-five-hour').textContent.slice(0, -1)) > 20);
+    check(Number($('#readout-weekly').textContent.slice(0, -1)) > 44, 'Both windows animate upward together');
+  }
+  const beforeReplay = Number($('#readout-five-hour').textContent.slice(0, -1));
+  recharge.click();
+  check(Number($('#readout-five-hour').textContent.slice(0, -1)) >= beforeReplay - 1,
+    'Replay during recharge continues from the current value');
+  await until(() => $('#readout-five-hour').textContent === '100%' && $('#readout-weekly').textContent === '100%'
+    && !$('.codex-demo').classList.contains('is-recharging'));
+  recharge.click();
+  if (!reducedMotion) await until(() => Number($('#readout-five-hour').textContent.slice(0, -1)) < 100);
+  await until(() => $('#readout-five-hour').textContent === '100%'
+    && !$('.codex-demo').classList.contains('is-recharging'));
   $('[data-quota="normal"]').click();
+  await until(() => $('#readout-five-hour').textContent === '72%' && $('#readout-weekly').textContent === '54%');
+  check($('#readout-weekly').textContent === '54%' && !$('.codex-demo').classList.contains('is-recharging'),
+    'Plenty left restores its example values after recharge');
+  recharge.click();
+  await until(() => Number($('#readout-five-hour').textContent.slice(0, -1)) > 72);
+  $('[data-display="readout"]').click();
+  check($('#readout-five-hour').textContent === '72%' && $('#readout-weekly').textContent === '54%'
+    && !$('.codex-demo').classList.contains('is-recharging'), 'Switching display cancels recharge at its example values');
+  $('[data-display="rings"]').click();
+  $('[data-quota="low"]').click();
+  await until(() => $('#readout-five-hour').textContent === '12%');
+  recharge.click();
+  if (!reducedMotion) await until(() => Number($('#readout-five-hour').textContent.slice(0, -1)) > 20);
+  $('[data-quota="stale"]').click();
+  await until(() => $('#readout-five-hour').textContent === '~12%');
+  check($('#readout-weekly').textContent === '~44%', 'Last known restores the prior scenario after recharge');
+  $('[data-quota="normal"]').click();
+  await until(() => $('#readout-five-hour').textContent === '72%');
+  $('[data-quota="low"]').click();
+  await until(() => $('#readout-five-hour').textContent === '12%');
+  $('[data-quota="normal"]').click();
+  await until(() => $('#readout-five-hour').textContent === '72%');
   check(!new URL(frame.contentWindow.location.href).searchParams.has('quotaValue'),
     'Leaving stale mode removes its saved value');
   await until(() => $('#readout-five-hour').textContent === '72%');
