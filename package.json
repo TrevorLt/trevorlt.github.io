@@ -1,0 +1,12 @@
+{
+  "name": "trevor-lin-portfolio",
+  "private": true,
+  "scripts": {
+    "build:tech-text": "esbuild src/tech-text.jsx --bundle --minify --format=iife --jsx=automatic --define:process.env.NODE_ENV=\\\"production\\\" --outfile=assets/tech-text.bundle.js"
+  },
+  "devDependencies": {
+    "esbuild": "0.28.2",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  }
+}

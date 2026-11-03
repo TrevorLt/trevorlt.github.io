@@ -317,6 +317,7 @@ window.addEventListener('popstate', restoreURLState);
 // updating after the name passes; never expose dark bands behind the intro.
 // Geometry is cached on resize, never read in scroll work.
 const hero = document.querySelector('.hero');
+const heroName = hero.querySelector('#tech-text-root');
 let heroTop = 0, heroEffectEnd = 1, scrollFrame = 0, lastShift = null;
 function paintHero() {
   scrollFrame = 0;
@@ -333,7 +334,7 @@ function queueHero() {
 function measureHero() {
   const rect = hero.getBoundingClientRect();
   heroTop = rect.top + window.scrollY;
-  heroEffectEnd = Math.max(0, hero.querySelector('h1').getBoundingClientRect().bottom - rect.top);
+  heroEffectEnd = Math.max(0, heroName.getBoundingClientRect().bottom - rect.top);
   queueHero();
 }
 window.addEventListener('scroll', queueHero, { passive: true });
@@ -352,26 +353,249 @@ reduced.addEventListener('change', () => {
   queueHero();
 });
 
+const generatorStage = document.querySelector('#generator-stage');
+const generatorFrontRotor = document.querySelector('#generator-front-rotor');
+const generatorAssemblyRotor = document.querySelector('#generator-assembly-rotor');
+const generatorCrank = document.querySelector('#generator-crank');
+const generatorCrankHit = document.querySelector('#generator-crank-hit');
+const generatorStatus = document.querySelector('#generator-status');
+const generatorHint = document.querySelector('#generator-hint');
+const generatorVoltage = document.querySelector('#generator-voltage');
+const generatorFrequency = document.querySelector('#generator-frequency');
+const generatorVoltageLine = document.querySelector('#generator-voltage-line');
+const generatorMeter = document.querySelector('.generator-meter');
+const generatorGearPlane = document.querySelector('#generator-gear-plane');
+const generatorLightning = document.querySelector('#generator-lightning');
+const generatorViewButtons = [...generatorStage.querySelectorAll('[data-generator-view]')];
+const generatorCrankCenter = { x: 96, y: 0 };
+let generatorAngle = 0, generatorSpeed = 0, generatorDragging = false, generatorPointerAngle = 0, generatorPointerTime = 0;
+let generatorFrame = 0, generatorLastFrame = 0, generatorFrontAngle = 0, generatorLastKeyTurn = 0;
+const maxCrankSpeed = 30 * Math.PI * 2;
+function pulseGeneratorLightning() {
+  if (reduced.matches || generatorStage.dataset.view !== 'rotor' || document.hidden) return;
+  const coils = document.querySelectorAll('#generator-front-coils use');
+  const coilIndex = Math.floor(Math.random() * coils.length);
+  const coilMatrix = coils[coilIndex].transform.baseVal.consolidate().matrix;
+  const origin = new DOMPoint((Math.random() - .5) * 36, 20 + Math.random() * 8).matrixTransform(coilMatrix);
+  const startX = origin.x, startY = origin.y;
+  const radius = Math.hypot(startX - 280, startY - 245);
+  const dx = (startX - 280) / radius, dy = (startY - 245) / radius;
+  generatorLightning.dataset.coilIndex = String(coilIndex);
+  generatorLightning.querySelector('.generator-cloud').setAttribute('d', 'M' + (startX - 38) + ' ' + startY + 'q35-22 76 0');
+  const points = [[startX, startY]];
+  for (let i = 1; i <= 11; i++) {
+    const jitter = (Math.random() - .5) * 25;
+    points.push([startX + dx * i * 9 - dy * jitter, startY + dy * i * 9 + dx * jitter]);
+  }
+  let path = points.map(([x,y], index) => (index ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1)).join(' ');
+  const fork = points[4];
+  path += 'M' + fork[0] + ' ' + fork[1] + 'l' + (dx * 23 - dy * 22) + ' ' + (dy * 23 + dx * 22) + 'l' + dx * 19 + ' ' + dy * 19;
+  generatorLightning.classList.remove('is-flashing');
+  generatorLightning.querySelectorAll('[pathLength]').forEach(bolt => bolt.setAttribute('d', path));
+  void generatorLightning.getBoundingClientRect();
+  generatorLightning.classList.add('is-flashing');
+}
+function scheduleGeneratorLightning() {
+  setTimeout(() => { pulseGeneratorLightning(); scheduleGeneratorLightning(); }, 1800 + Math.random() * 2400);
+}
+function gearPath(teeth, rootRadius, tipRadius) {
+  const points = [];
+  for (let i = 0; i < teeth; i++) {
+    const angle = i * Math.PI * 2 / teeth;
+    for (const [offset, radius] of [[0, rootRadius], [.18, rootRadius], [.27, tipRadius], [.73, tipRadius], [.82, rootRadius], [1, rootRadius]]) {
+      const a = angle + offset * Math.PI * 2 / teeth;
+      points.push([Math.cos(a) * radius, Math.sin(a) * radius]);
+    }
+  }
+  return points.map(([x, y], i) => (i ? 'L' : 'M') + x.toFixed(2) + ' ' + y.toFixed(2)).join(' ') + 'Z';
+}
+// Pitch radii of 24 and 72 meet at the shared 96-unit center distance.
+document.querySelector('.generator-small-gear-path').setAttribute('d', gearPath(14, 22, 26));
+document.querySelector('.generator-large-gear-path').setAttribute('d', gearPath(42, 66, 78));
+function updateGeneratorVoltage() {
+  // shortcut: scales linearly from the report's single 25 Hz test point, update when a measured speed/output curve is available.
+  const frequency = Math.min(30, Math.abs(generatorSpeed) / (Math.PI * 2));
+  const voltage = 2.72 * frequency / 25;
+  const visibleCycles = Math.max(2, frequency * .1);
+  generatorVoltage.value = voltage.toFixed(2) + ' V';
+  generatorFrequency.value = frequency.toFixed(1) + ' Hz';
+  generatorVoltageLine.setAttribute('d', Array.from({ length: 129 }, (_, index) => {
+    const x = 35 + index / 128 * 277;
+    const sample = voltage * Math.sin(index / 128 * visibleCycles * Math.PI * 2 + generatorAngle * 12);
+    const y = 64 - sample / 3.3 * 44;
+    return (index ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
+  }).join(' '));
+}
+function renderGenerator() {
+  const crankDegrees = generatorAngle * 180 / Math.PI;
+  const rotorDegrees = -crankDegrees * 3;
+  generatorFrontRotor.setAttribute('transform', 'rotate(' + generatorFrontAngle + ' 280 245)');
+  generatorAssemblyRotor.setAttribute('transform', 'rotate(' + rotorDegrees + ')');
+  document.querySelector('#generator-small-gear').setAttribute('transform', 'rotate(' + rotorDegrees + ')');
+  document.querySelector('#generator-large-gear').setAttribute('transform', 'rotate(' + crankDegrees + ' ' + generatorCrankCenter.x + ' ' + generatorCrankCenter.y + ')');
+  generatorCrank.setAttribute('transform', 'rotate(' + crankDegrees + ' ' + generatorCrankCenter.x + ' ' + generatorCrankCenter.y + ')');
+}
+function animateGenerator(now) {
+  generatorFrame = 0;
+  const elapsed = generatorLastFrame ? Math.min(.05, (now - generatorLastFrame) / 1000) : 0;
+  generatorLastFrame = now;
+  if (generatorStage.dataset.view === 'rotor') {
+    if (!reduced.matches) {
+      generatorFrontAngle = (generatorFrontAngle + elapsed * 360 * .28) % 360;
+      generatorFrontRotor.setAttribute('transform', 'rotate(' + generatorFrontAngle + ' 280 245)');
+      generatorFrame = requestAnimationFrame(animateGenerator);
+    }
+    return;
+  }
+  if (!generatorDragging && Math.abs(generatorSpeed) > .025) {
+    generatorAngle += generatorSpeed * elapsed;
+    generatorSpeed *= Math.exp(-elapsed / 2);
+  } else if (!generatorDragging) generatorSpeed = 0;
+  renderGenerator();
+  if (generatorDragging || Math.abs(generatorSpeed) > .025) generatorFrame = requestAnimationFrame(animateGenerator);
+}
+function scheduleGenerator() {
+  if (!generatorFrame) {
+    generatorLastFrame = performance.now();
+    generatorFrame = requestAnimationFrame(animateGenerator);
+  }
+}
+function setGeneratorView(view) {
+  if (view !== 'rotor' && view !== 'assembly') return;
+  if (generatorStage.dataset.view === view) return;
+  const crankHadFocus = document.activeElement === generatorCrank;
+  generatorStage.dataset.view = view;
+  generatorMeter.hidden = view !== 'assembly';
+  if (view === 'rotor') pulseGeneratorLightning();
+  generatorViewButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.generatorView === view)));
+  document.querySelector('#generator-rotor-view').setAttribute('aria-hidden', String(view !== 'rotor'));
+  const assembly = document.querySelector('#generator-assembly-view');
+  assembly.setAttribute('aria-hidden', String(view !== 'assembly'));
+  generatorCrank.setAttribute('tabindex', view === 'assembly' ? '0' : '-1');
+  generatorHint.textContent = view === 'assembly'
+    ? 'drag the handle to generate electricity or press Enter'
+    : 'Press Full assembly or V to reveal the gears and hand crank.';
+  if (view === 'rotor') {
+    generatorDragging = false;
+    generatorSpeed = 0;
+    if (crankHadFocus) generatorViewButtons.find(button => button.dataset.generatorView === 'rotor').focus();
+  }
+  generatorStatus.textContent = view === 'assembly' ? 'Full assembly view. Turn the crank to update the estimated output voltage.' : 'Rotor view. Press V or choose Full assembly to reveal the drivetrain.';
+  renderGenerator();
+  scheduleGenerator();
+}
+function pointerCrankAngle(event) {
+  const matrix = generatorGearPlane.getScreenCTM();
+  if (!matrix) return null;
+  const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
+  return Math.atan2(point.y - generatorCrankCenter.y, point.x - generatorCrankCenter.x);
+}
+generatorViewButtons.forEach(button => button.addEventListener('click', () => setGeneratorView(button.dataset.generatorView)));
+generatorCrankHit.addEventListener('pointerdown', event => {
+  if (generatorStage.dataset.view !== 'assembly' || event.button !== 0) return;
+  const angle = pointerCrankAngle(event);
+  if (angle === null) return;
+  generatorDragging = true;
+  generatorPointerAngle = angle;
+  generatorPointerTime = performance.now();
+  generatorSpeed = 0;
+  generatorCrank.focus();
+  try { generatorCrankHit.setPointerCapture(event.pointerId); } catch {}
+  event.preventDefault();
+  scheduleGenerator();
+});
+generatorCrankHit.addEventListener('pointermove', event => {
+  if (!generatorDragging) return;
+  const angle = pointerCrankAngle(event);
+  if (angle === null) return;
+  const now = performance.now();
+  const delta = Math.atan2(Math.sin(angle - generatorPointerAngle), Math.cos(angle - generatorPointerAngle));
+  const elapsed = Math.max(.008, (now - generatorPointerTime) / 1000);
+  generatorAngle = (generatorAngle + delta) % (Math.PI * 2);
+  generatorSpeed = Math.max(-maxCrankSpeed, Math.min(maxCrankSpeed, generatorSpeed * .35 + delta / elapsed * .65));
+  generatorPointerAngle = angle;
+  generatorPointerTime = now;
+  scheduleGenerator();
+});
+function releaseGeneratorPointer() {
+  if (!generatorDragging) return;
+  generatorDragging = false;
+  scheduleGenerator();
+}
+generatorCrankHit.addEventListener('pointerup', releaseGeneratorPointer);
+generatorCrankHit.addEventListener('pointercancel', releaseGeneratorPointer);
+generatorCrank.addEventListener('keydown', event => {
+  if (event.repeat) return;
+  if (event.key === 'Enter') {
+    event.preventDefault();
+    event.stopPropagation();
+    accelerateGenerator();
+    return;
+  }
+  const now = performance.now();
+  const step = event.key === 'ArrowRight' ? Math.PI / 12 : event.key === 'ArrowLeft' ? -Math.PI / 12 : event.key === ' ' ? Math.PI * 2 : 0;
+  if (!step) return;
+  event.preventDefault();
+  const elapsed = generatorLastKeyTurn ? Math.max(.14, (now - generatorLastKeyTurn) / 1000) : .14;
+  generatorAngle = (generatorAngle + step) % (Math.PI * 2);
+  generatorSpeed = Math.max(-maxCrankSpeed, Math.min(maxCrankSpeed, step / elapsed));
+  generatorLastKeyTurn = now;
+  scheduleGenerator();
+});
+function accelerateGenerator() {
+  generatorAngle = (generatorAngle + Math.PI / 6) % (Math.PI * 2);
+  generatorSpeed = Math.min(maxCrankSpeed, Math.abs(generatorSpeed) + Math.PI * 2);
+  generatorLastKeyTurn = performance.now();
+  scheduleGenerator();
+}
+window.addEventListener('keydown', event => {
+  if (event.altKey || event.ctrlKey || event.metaKey || event.target.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(event.target.tagName)) return;
+  const interactiveTarget = event.target instanceof Element && event.target.closest('button,a,summary,[role="button"],input,select,textarea');
+  if (event.key === 'Enter' && generatorStage.dataset.view === 'assembly' && event.target !== generatorCrank && !interactiveTarget) {
+    event.preventDefault();
+    accelerateGenerator();
+    return;
+  }
+  if (event.key.toLowerCase() !== 'v') return;
+  setGeneratorView(generatorStage.dataset.view === 'rotor' ? 'assembly' : 'rotor');
+});
+reduced.addEventListener('change', () => {
+  if (generatorStage.dataset.view === 'rotor' && !reduced.matches) scheduleGenerator();
+});
+generatorCrank.setAttribute('tabindex', '-1');
+document.querySelector('#generator-rotor-view').setAttribute('aria-hidden', 'false');
+renderGenerator();
+updateGeneratorVoltage();
+setInterval(updateGeneratorVoltage, 100);
+scheduleGeneratorLightning();
+scheduleGenerator();
+
 const battlebotViewer = document.querySelector('#battlebot-model');
 const explodeButton = document.querySelector('#battlebot-explode');
 const drivetrainButton = document.querySelector('#drivetrain-button');
 const battlebotStatus = document.querySelector('#battlebot-status');
+const DRIVETRAIN_RAMP_MS = 1500;
 let animationsReady = false, assemblyExploded = false, assemblyTransition = false, assemblyTarget = false, assemblyReturnFocus = false, drivetrainRunning = false;
+let drivetrainTransition = false, drivetrainRampFrame = 0;
 function updateBattleBotControls() {
-  explodeButton.disabled = !animationsReady || assemblyTransition;
-  drivetrainButton.disabled = !animationsReady || assemblyTransition || assemblyExploded || reduced.matches;
-  drivetrainButton.textContent = drivetrainRunning ? 'Stop drivetrain' : 'Run drivetrain';
+  explodeButton.disabled = !animationsReady || assemblyTransition || drivetrainRunning || drivetrainTransition;
+  drivetrainButton.disabled = !animationsReady || assemblyTransition || assemblyExploded || drivetrainTransition || reduced.matches;
+  drivetrainButton.textContent = drivetrainTransition ? (drivetrainRunning ? 'Starting drivetrain…' : 'Coasting…') : drivetrainRunning ? 'Stop drivetrain' : 'Run drivetrain';
   drivetrainButton.setAttribute('aria-pressed', String(drivetrainRunning));
 }
 function failBattleBotPreview() {
+  stopDrivetrain();
   animationsReady = false;
   updateBattleBotControls();
   battlebotStatus.textContent = '3D preview unavailable. Open the Onshape source to inspect the CAD.';
 }
 function stopDrivetrain() {
-  if (!drivetrainRunning) return;
+  if (!drivetrainRunning && !drivetrainTransition) return;
+  cancelAnimationFrame(drivetrainRampFrame);
+  drivetrainRampFrame = 0;
+  drivetrainTransition = false;
   battlebotViewer.pause();
-  battlebotViewer.currentTime = 0;
+  battlebotViewer.timeScale = 1;
   drivetrainRunning = false;
   updateBattleBotControls();
 }
@@ -389,7 +613,7 @@ function finishAssemblyTransition() {
   if (restoreFocus) explodeButton.focus();
 }
 function setAssemblyExploded(next) {
-  if (assemblyTransition || next === assemblyExploded) return;
+  if (!animationsReady || assemblyTransition || drivetrainRunning || drivetrainTransition || next === assemblyExploded) return;
   const clip = next ? 'Explode' : 'Assemble';
   if (!battlebotViewer.availableAnimations.includes(clip)) {
     battlebotStatus.textContent = 'The assembly animation is unavailable. Open the Onshape source to inspect the CAD.';
@@ -402,6 +626,7 @@ function setAssemblyExploded(next) {
   updateBattleBotControls();
   battlebotStatus.textContent = next ? 'Lifting the replaceable armor and separating the cover, body, and wheels…' : 'Reassembling the parts…';
   battlebotViewer.animationName = clip;
+  battlebotViewer.timeScale = 1;
   battlebotViewer.currentTime = 0;
   if (reduced.matches) {
     battlebotViewer.play({ repetitions: 1 });
@@ -414,7 +639,7 @@ function setAssemblyExploded(next) {
   } else battlebotViewer.play({ repetitions: 1 });
 }
 function setDrivetrainRunning(running) {
-  if (assemblyTransition || assemblyExploded || running === drivetrainRunning) return;
+  if (!animationsReady || assemblyTransition || assemblyExploded || drivetrainTransition || running === drivetrainRunning) return;
   if (running && reduced.matches) {
     battlebotStatus.textContent = 'Drivetrain motion is paused by your reduced-motion setting.';
     return;
@@ -424,17 +649,34 @@ function setDrivetrainRunning(running) {
     return;
   }
   if (running) {
-    battlebotViewer.animationName = 'Drivetrain';
-    battlebotViewer.currentTime = 0;
+    if (battlebotViewer.animationName !== 'Drivetrain') {
+      battlebotViewer.animationName = 'Drivetrain';
+      battlebotViewer.currentTime = 0;
+    }
+    battlebotViewer.timeScale = 0;
     battlebotViewer.play();
-    drivetrainRunning = true;
-  } else {
-    battlebotViewer.pause();
-    battlebotViewer.currentTime = 0;
-    drivetrainRunning = false;
   }
+  drivetrainRunning = running;
+  drivetrainTransition = true;
+  const startScale = battlebotViewer.timeScale;
+  const targetScale = running ? 1 : 0;
+  const started = performance.now();
   updateBattleBotControls();
-  battlebotStatus.textContent = drivetrainRunning ? 'Concept drivetrain running.' : 'Drivetrain stopped.';
+  battlebotStatus.textContent = running ? 'Drivetrain accelerating…' : 'Drivetrain coasting to a stop…';
+  function ramp(now) {
+    const progress = Math.min(1, (now - started) / DRIVETRAIN_RAMP_MS);
+    const eased = progress * progress * (3 - 2 * progress);
+    battlebotViewer.timeScale = startScale + (targetScale - startScale) * eased;
+    if (progress < 1) drivetrainRampFrame = requestAnimationFrame(ramp);
+    else {
+      drivetrainRampFrame = 0;
+      drivetrainTransition = false;
+      if (!running) battlebotViewer.pause();
+      updateBattleBotControls();
+      battlebotStatus.textContent = running ? 'Concept drivetrain running.' : 'Drivetrain stopped.';
+    }
+  }
+  drivetrainRampFrame = requestAnimationFrame(ramp);
 }
 explodeButton.addEventListener('click', () => setAssemblyExploded(!assemblyExploded));
 drivetrainButton.addEventListener('click', () => setDrivetrainRunning(!drivetrainRunning));

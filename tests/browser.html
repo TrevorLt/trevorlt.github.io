@@ -3,7 +3,7 @@
 <title>Portfolio regression checks</title>
 <h1>Portfolio regression checks</h1>
 <pre id="results">Running…</pre>
-<iframe title="Portfolio under test" style="width:100%;height:600px"></iframe>
+<iframe title="Portfolio under test" style="width:100%;height:828px"></iframe>
 <script type="module">
 const frame = document.querySelector('iframe');
 const results = document.querySelector('#results');
@@ -145,15 +145,280 @@ try {
   await load('../?quota=normal');
   const captions = [...frame.contentDocument.querySelectorAll('.project-caption')].map(item => item.textContent.trim());
   const liveStatus = $('#battlebot-status');
-  check(captions.length === 3 && captions.every(text => text === 'Interactive preview, animated for clarity.') &&
+  check(captions.length === 4 && captions.every(text => text === 'Interactive preview, animated for clarity.') &&
     !frame.contentDocument.querySelector('.battlebot-concept-note,.battlebot-stage-foot') &&
     liveStatus.getAttribute('role') === 'status' && liveStatus.getAttribute('aria-live') === 'polite' && liveStatus.getBoundingClientRect().width <= 1,
-    'All three project previews use one short shared caption');
+    'All four project previews use one short shared caption');
+  const heroFoot = frame.contentDocument.querySelector('.hero-foot').textContent.trim();
+  check(heroFoot === 'Computer Engineering + Robotics Certificate - Northwestern.' && !heroFoot.includes('Learning by building'),
+    'Hero keeps only the requested education line');
+  const heroName = $('#name');
+  const techRoot = $('#tech-text-root');
+  const staticPage = new DOMParser().parseFromString(await (await fetch('../')).text(), 'text/html');
+  const staticTechHosts = [...staticPage.querySelectorAll('[data-tech-text]')];
+  check(staticTechHosts.length === 9 && staticTechHosts.every(host => host.textContent.trim() === host.dataset.techText),
+    'Static hero, section, and project titles remain visible if the React bundle does not run');
+  await until(() => techRoot.querySelectorAll('.tech-text-canvas').length === 2);
+  check(heroName.textContent.trim() === 'Trevor Lin' && $('#home').getAttribute('aria-labelledby') === 'name' &&
+    techRoot.getAttribute('aria-hidden') === 'true' && techRoot.querySelectorAll('.tech-text-canvas').length === 2,
+    'ReactBits wordmark keeps the accessible heading and mounts its two canvas lines');
+  const techHosts = [...frame.contentDocument.querySelectorAll('[data-tech-text]')];
+  const headings = [...frame.contentDocument.querySelectorAll('h1,h2,h3')];
+  await until(() => techHosts.every(host => host.querySelectorAll('.tech-text-canvas').length === 1));
+  check(headings.length === 8 && headings.every(heading => heading.classList.contains('visually-hidden') || heading.querySelector('.visually-hidden')) &&
+    techHosts.length === 9 && techHosts.every(host => host.querySelector('.tech-text-canvas')),
+    'ReactBits mounts on the hero, section, and project headings while keeping semantic heading text');
+  const heroTextHosts = [...techRoot.querySelectorAll('.tech-heading-mount')];
+  const heroBounds = techRoot.getBoundingClientRect();
+  const heroCopyBounds = frame.contentDocument.querySelector('.hero-copy').getBoundingClientRect();
+  const heroFootBounds = frame.contentDocument.querySelector('.hero-foot').getBoundingClientRect();
+  check(heroTextHosts.length === 2 && heroTextHosts.every(host => {
+    const hostBounds = host.getBoundingClientRect();
+    const canvasBounds = host.querySelector('canvas').getBoundingClientRect();
+    return canvasBounds.top >= hostBounds.top - 1 && canvasBounds.bottom <= hostBounds.bottom + 1;
+  }) && heroBounds.bottom <= heroCopyBounds.top && heroCopyBounds.bottom <= heroFootBounds.top,
+  'Hero title canvases stay within their rows without overlapping the intro or footer');
+  const heroFont = Number.parseFloat(getComputedStyle(techRoot).fontSize);
+  const viewportWidth = frame.contentWindow.innerWidth;
+  const originalHeroFont = viewportWidth <= 600 ? viewportWidth * 0.29 : viewportWidth <= 900 ? viewportWidth * 0.22
+    : viewportWidth >= 1800 ? 300 : Math.max(130, Math.min(viewportWidth * 0.182, 280));
+  check(Math.abs(heroFont - originalHeroFont) < 1, 'Hero name keeps its original responsive font size');
+  const compactTitleHosts = [...frame.contentDocument.querySelectorAll('h2 .tech-heading-mount,h3 .tech-heading-mount')];
+  check(compactTitleHosts.length === 7 && compactTitleHosts.every(host => {
+    const hostBounds = host.getBoundingClientRect();
+    const canvasBounds = host.querySelector('canvas').getBoundingClientRect();
+    return canvasBounds.top < hostBounds.top - 26 && canvasBounds.bottom > hostBounds.bottom + 26 &&
+      canvasBounds.left < hostBounds.left - 14 && canvasBounds.right > hostBounds.right + 14;
+  }), 'Small heading canvases leave room for the full selection label and particle effect');
+  const techCanvas = techRoot.querySelector('.tech-text-canvas');
+  await until(() => techCanvas.width > 0 && techCanvas.height > 0);
+  const techCanvasContext = techCanvas.getContext('2d');
+  const techLabels = [];
+  let techParticleMarks = 0;
+  const fillText = techCanvasContext.fillText;
+  const fillRect = techCanvasContext.fillRect;
+  techCanvasContext.fillText = function(text, ...args) { techLabels.push(String(text)); return fillText.call(this, text, ...args); };
+  techCanvasContext.fillRect = function(...args) { techParticleMarks++; return fillRect.apply(this, args); };
+  if (!reducedMotion) {
+    await until(() => techLabels.some(label => /\d+ × \d+/.test(label)));
+    check(true, 'Hero wordmark sweeps its pixel readout automatically');
+  }
+  const techLine = techRoot.querySelector('.tech-text');
+  const techBox = techLine.getBoundingClientRect();
+  techLine.dispatchEvent(new frame.contentWindow.PointerEvent('pointermove', {
+    clientX: techBox.left + techBox.width / 2, clientY: techBox.top + techBox.height / 2, pointerType:'mouse'
+  }));
+  await until(() => techLabels.some(label => /\d+ × \d+/.test(label)) && techParticleMarks > 0);
+  check(techLabels.some(label => /\d+ × \d+/.test(label)), 'ReactBits shows the hovered glyph pixel dimensions');
+  check(techParticleMarks > 0, 'ReactBits renders animated pixel particles around the selected glyph');
+  techLine.dispatchEvent(new frame.contentWindow.PointerEvent('pointerleave', {pointerType:'mouse'}));
+  techCanvasContext.fillText = fillText;
+  techCanvasContext.fillRect = fillRect;
+  const smallTech = $('#battlebot-title .tech-heading-mount .tech-text');
+  frame.contentWindow.scrollTo(0, smallTech.getBoundingClientRect().top + frame.contentWindow.scrollY - 80);
+  const smallCanvas = smallTech.querySelector('canvas');
+  const smallContext = smallCanvas.getContext('2d');
+  const smallLabels = [];
+  let smallParticles = 0;
+  const smallFillText = smallContext.fillText;
+  const smallFillRect = smallContext.fillRect;
+  smallContext.fillText = function(text, x, y, ...args) {
+    smallLabels.push({text:String(text), x, y, align:this.textAlign, width:this.measureText(String(text)).width});
+    return smallFillText.call(this, text, x, y, ...args);
+  };
+  smallContext.fillRect = function(...args) { smallParticles++; return smallFillRect.apply(this, args); };
+  await new Promise(resolve => setTimeout(resolve, 300));
+  check(smallLabels.length === 0, 'Small headings stay still until hovered');
+  const smallBounds = smallTech.getBoundingClientRect();
+  smallTech.dispatchEvent(new frame.contentWindow.PointerEvent('pointermove', {
+    clientX: smallBounds.left + smallBounds.width * 0.1, clientY: smallBounds.top + smallBounds.height / 2, pointerType:'mouse'
+  }));
+  await until(() => smallLabels.some(label => /\d+ × \d+/.test(label.text)) && smallParticles > 0);
+  const pixelLabel = smallLabels.find(label => /\d+ × \d+/.test(label.text));
+  const labelLeft = pixelLabel.align === 'right' ? pixelLabel.x - pixelLabel.width : pixelLabel.x;
+  check(labelLeft >= -1 && labelLeft + pixelLabel.width <= smallCanvas.clientWidth + 1 &&
+    pixelLabel.y >= 0 && pixelLabel.y <= smallCanvas.clientHeight,
+    'Hovered pixel dimensions stay inside the heading canvas');
+  check(smallParticles > 0, 'Small headings keep the pixel particles on hover');
+  smallTech.dispatchEvent(new frame.contentWindow.PointerEvent('pointerleave', {pointerType:'mouse'}));
+  smallContext.fillText = smallFillText;
+  smallContext.fillRect = smallFillRect;
+  const projects = [...frame.contentDocument.querySelectorAll('.project')];
+  const desktopProjects = frame.contentWindow.innerWidth > 600;
+  check(projects.every((project, index) => {
+    const copy = project.querySelector('.project-copy').getBoundingClientRect();
+    const stage = [...project.children].find(child => !child.classList.contains('project-copy')).getBoundingClientRect();
+    return desktopProjects ? (index % 2 === 0 ? copy.left < stage.left : stage.left < copy.left) : copy.top < stage.top;
+  }), desktopProjects ? 'Desktop projects alternate text and preview columns' : 'Mobile projects keep readable copy before each preview');
+  const previewWidths = ['.battlebot-stage', '.generator-stage', '.scanner-stage', '.codex-demo']
+    .map(selector => frame.contentDocument.querySelector(selector).getBoundingClientRect().width);
+  check(Math.max(...previewWidths) - Math.min(...previewWidths) < 1,
+    'All four project previews have the same width');
+  const generator = $('#ac-generator');
+  const generatorStage = $('#generator-stage');
+  const generatorReducedMotion = frame.contentWindow.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const frontRotor = $('#generator-front-rotor');
+  const frontBearing = $('#generator-front-bearing');
+  const assemblyRotor = $('#generator-assembly-rotor');
+  const rotorBox = frontRotor.getBoundingClientRect();
+  const visualBox = $('#generator-visual').getBoundingClientRect();
+  const initialRotorPose = frontRotor.getAttribute('transform');
+  if (!generatorReducedMotion) await until(() => frontRotor.getAttribute('transform') !== initialRotorPose);
+  check(generatorStage.dataset.view === 'rotor' && $('#generator-rotor-view').getAttribute('aria-hidden') === 'false' &&
+    $('#generator-assembly-view').getAttribute('aria-hidden') === 'true' &&
+    (generatorReducedMotion ? frontRotor.getAttribute('transform') === initialRotorPose : frontRotor.getAttribute('transform') !== initialRotorPose),
+    'Generator opens in the spinning front view and respects reduced motion');
+  check(Math.abs(rotorBox.left + rotorBox.width / 2 - (visualBox.left + visualBox.width / 2)) < 2 &&
+    Math.abs(rotorBox.top + rotorBox.height / 2 - (visualBox.top + visualBox.height * 245 / 500)) < 2,
+    'Front-view rotor stays concentric with the stator');
+  check(frontBearing.querySelectorAll('circle').length === 5 && !frontRotor.contains(frontBearing),
+    'Front view keeps the five-ring bearing visible and stationary over the rotor');
+  check($('#generator-front-coils').querySelectorAll('use').length === 8 &&
+    [...$('#generator-rotor-view').querySelectorAll(':scope > circle')].every(circle => circle.getAttribute('fill') === 'none') &&
+    $('.generator-meter').hidden && frame.contentWindow.getComputedStyle($('.generator-meter')).display === 'none',
+    'Rotor view exposes all eight coil packs and hides the voltage panel');
+  if (!generatorReducedMotion) {
+    frame.contentWindow.pulseGeneratorLightning();
+    const firstBolt = $('#generator-lightning-bolt').getAttribute('d');
+    frame.contentWindow.pulseGeneratorLightning();
+    check(firstBolt && $('#generator-lightning-bolt').getAttribute('d') !== firstBolt &&
+      frame.contentWindow.getComputedStyle($('#generator-lightning-bolt')).animationName === 'generator-lightning' &&
+      frame.contentWindow.getComputedStyle($('#generator-lightning-glow')).animationName === 'generator-lightning',
+      'Lightning generates a new branched path and discharge animation for each pulse');
+    const origin = $('#generator-lightning-bolt').getAttribute('d').match(/^M([-\d.]+) ([-\d.]+)/);
+    const sourceCoil = $('#generator-front-coils').querySelectorAll('use')[Number($('#generator-lightning').dataset.coilIndex)];
+    const localOrigin = new frame.contentWindow.DOMPoint(Number(origin[1]), Number(origin[2]))
+      .matrixTransform(sourceCoil.transform.baseVal.consolidate().matrix.inverse());
+    check(Math.abs(localOrigin.x) <= 51 && Math.abs(localOrigin.y) <= 40,
+      'Lightning starts inside a copper coil pack');
+  }
+  check(assemblyRotor.querySelectorAll('use').length === 8 && !assemblyRotor.querySelector('ellipse'),
+    'Assembly rotor rotates its eight magnets within a fixed circular face');
+  const assemblyRotorBox = assemblyRotor.getBoundingClientRect();
+  const assemblyBearingBox = $('#generator-assembly-bearing').getBoundingClientRect();
+  check(Math.abs(assemblyRotorBox.left + assemblyRotorBox.width / 2 - assemblyBearingBox.left - assemblyBearingBox.width / 2) < 2 &&
+    Math.abs(assemblyRotorBox.top + assemblyRotorBox.height / 2 - assemblyBearingBox.top - assemblyBearingBox.height / 2) < 2,
+    'Isometric rotor magnets stay centered on the shaft bearing');
+  const generatorDescription = generator.querySelector('.project-copy > p:not(.project-subtitle)').textContent;
+  check(/3D-printed and laser-cut/i.test(generatorDescription) && /eight N52 magnets/i.test(generatorDescription) &&
+    /60 turns of 0\.6 mm wire/i.test(generatorDescription) && /2\.72 V peak at 25 Hz/i.test(generatorDescription) &&
+    /0\.49 A peak/i.test(generatorDescription) && /1\.33 W peak/i.test(generatorDescription) && /5\.6 Ω/i.test(generatorDescription),
+    'Generator description includes the documented build materials and output point');
+  check(generator.querySelector('.project-link').href.startsWith('https://cad.onshape.com/documents/00c556d90785a9dc82e9c061/') &&
+    !$('#generator-disclaimer'),
+    'Generator links the provided CAD without extra explanatory copy below the preview');
+  check($('#generator-voltage') && $('#generator-voltage-graph') && $('#generator-voltage-line') &&
+    $('#generator-frequency') && !$('#generator-peak-voltage'),
+    'Generator meter contains voltage, crank frequency and a simple AC graph');
+  const isoMatrix = $('#generator-isometric').transform.baseVal.consolidate().matrix;
+  check($('#generator-rotor-shaft').getAttribute('d') === 'M220 260 330 330' && $('#generator-shaft-collar') &&
+    $('#generator-stator-face').getAttribute('transform') === 'translate(220 260)' &&
+    $('#generator-gear-plane').getAttribute('transform') === 'translate(330 330)' &&
+    $('#generator-isometric').contains($('#generator-stator-face')) && $('#generator-isometric').contains($('#generator-gear-plane')) &&
+    Math.abs(isoMatrix.a - .88) < .002 && Math.abs(isoMatrix.b) < .002 &&
+    Math.abs(isoMatrix.c) < .002 && Math.abs(isoMatrix.d - 1) < .002 && Math.abs(isoMatrix.e - 26) < .002 &&
+    $('#generator-large-gear .generator-large-gear-path').getAttribute('transform') === 'translate(96 0)' &&
+    $('#generator-large-gear circle').getAttribute('cx') === '96' && $('#generator-large-gear circle').getAttribute('cy') === '0',
+    'Generator and gears share an upright projection, coaxial shaft, and level 3:1 gear centers');
+  check($('#generator-rear-face').getAttribute('cx') === '165' && $('#generator-rear-face').getAttribute('cy') === '225',
+    'Short cylinder depth follows the same axis as the rotor shaft');
+  const largeGear = $('#generator-large-gear .generator-gear');
+  const smallGear = $('#generator-small-gear .generator-gear');
+  check((largeGear.getAttribute('d').match(/L/g) || []).length + 1 === 252 &&
+    (smallGear.getAttribute('d').match(/L/g) || []).length + 1 === 84,
+    'Generator gears use the documented 3:1 tooth-count ratio');
+  $('[data-generator-view="assembly"]').click();
+  check(generatorStage.dataset.view === 'assembly' && $('#generator-rotor-view').getAttribute('aria-hidden') === 'true' &&
+    $('#generator-assembly-view').getAttribute('aria-hidden') === 'false' && $('#generator-crank').getAttribute('tabindex') === '0' && !$('.generator-meter').hidden,
+    'Full assembly view reveals the crank and drivetrain');
+  const viewButtonGearPose = $('#generator-large-gear').getAttribute('transform');
+  const rotorViewButton = $('[data-generator-view="rotor"]');
+  rotorViewButton.focus();
+  const rotorEnter = new KeyboardEvent('keydown', {key:'Enter', bubbles:true, cancelable:true});
+  rotorViewButton.dispatchEvent(rotorEnter);
+  await new Promise(resolve => frame.contentWindow.requestAnimationFrame(resolve));
+  check(generatorStage.dataset.view === 'assembly' && $('#generator-large-gear').getAttribute('transform') === viewButtonGearPose && !rotorEnter.defaultPrevented,
+    'Enter on a view button is not intercepted as generator acceleration');
+  check(generatorReducedMotion || (frame.contentWindow.getComputedStyle($('.generator-front-rotor-transition')).animationName === 'generator-rotor-collapse' &&
+    frame.contentWindow.getComputedStyle($('#generator-drive-train')).transitionDelay.split(',')[0] === '0.58s'),
+    'Full assembly choreographs the spinning rotor before the drivetrain appears');
+  check($('#generator-hint').textContent === 'drag the handle to generate electricity or press Enter',
+    'Full assembly view uses the short handle and Enter instruction');
+  $('#generator-crank').focus();
+  const crankFocus = frame.contentWindow.getComputedStyle($('#generator-crank'));
+  check(crankFocus.outlineColor === 'rgb(218, 250, 156)' && crankFocus.outlineStyle === 'dashed' && crankFocus.boxShadow === 'none',
+    'Keyboard crank focus uses a quiet green outline without a blue box shadow');
+  const voltage = $('#generator-voltage');
+  for (let i = 0; i < 25; i++) frame.contentWindow.document.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', bubbles:true, cancelable:true}));
+  frame.contentWindow.updateGeneratorVoltage();
+  check(voltage.textContent === '2.72 V' && $('#generator-frequency').textContent === '25.0 Hz',
+    '25 large-gear rotations per second produce the documented 2.72 V estimate');
+  for (let i = 0; i < 15; i++) frame.contentWindow.document.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', bubbles:true, cancelable:true}));
+  frame.contentWindow.updateGeneratorVoltage();
+  check(voltage.textContent === '3.26 V' && $('#generator-frequency').textContent === '30.0 Hz',
+    'Repeated Enter acceleration is bounded at 30 crank Hz');
+  $('[data-generator-view="rotor"]').click();
+  $('[data-generator-view="assembly"]').click();
+  const initialVoltageGraph = $('#generator-voltage-line').getAttribute('d');
+  const voltageUpdates = [];
+  const waveformSamples = [];
+  const voltageObserver = new frame.contentWindow.MutationObserver(() => {
+    voltageUpdates.push(frame.contentWindow.performance.now());
+    waveformSamples.push($('#generator-voltage-line').getAttribute('d'));
+  });
+  voltageObserver.observe($('#generator-voltage-line'), {attributes:true, attributeFilter:['d']});
+  for (let i = 0; i < 13; i++) {
+    $('#generator-crank').dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowRight', bubbles:true, cancelable:true}));
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  await until(() => voltageUpdates.length >= 3);
+  voltageObserver.disconnect();
+  const voltageIntervals = voltageUpdates.slice(1).map((time, index) => time - voltageUpdates[index]);
+  const gearAngle = Number($('#generator-large-gear').getAttribute('transform').match(/rotate\(([-\d.]+)/)[1]);
+  const rotorAngle = Number($('#generator-small-gear').getAttribute('transform').match(/rotate\(([-\d.]+)/)[1]);
+  check(Number.parseFloat(voltage.textContent) > 0 && Math.abs(rotorAngle + 3 * gearAngle) < .01,
+    'Turning the crank spins the rotor at 3× speed and produces a voltage estimate');
+  check($('#generator-voltage-line').getAttribute('d') !== initialVoltageGraph,
+    'Voltage graph follows the generated reading');
+  check(waveformSamples.some(path => {
+    const y = [...path.matchAll(/[ML][\d.]+ ([-\d.]+)/g)].map(match => Number(match[1]));
+    return y.some(value => value < 64) && y.some(value => value > 64);
+  }) && $('#generator-voltage-graph').textContent.includes('+V') && $('#generator-voltage-graph').textContent.includes('−V'),
+    'AC voltage waveform crosses zero and labels positive and negative polarity');
+  check(voltageIntervals.some(interval => interval >= 70 && interval <= 200),
+    'Voltage display refreshes at roughly 100-millisecond intervals while cranking');
+  const beforeEnter = $('#generator-large-gear').getAttribute('transform');
+  frame.contentWindow.document.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', bubbles:true, cancelable:true}));
+  await new Promise(resolve => setTimeout(resolve, 650));
+  check($('#generator-large-gear').getAttribute('transform') !== beforeEnter && Number.parseFloat(voltage.textContent) > 0,
+    'Enter accelerates the generator without needing handle rotation');
+  const gearMatrix = $('#generator-gear-plane').getScreenCTM();
+  const localPoint = (x, y) => new frame.contentWindow.DOMPoint(x, y).matrixTransform(gearMatrix);
+  const dragStart = localPoint(134, -80);
+  const dragRadius = Math.hypot(134 - 96, -80);
+  const dragEnd = localPoint(96 + dragRadius * Math.cos(-Math.PI / 2), dragRadius * Math.sin(-Math.PI / 2));
+  const crankHit = $('#generator-crank-hit');
+  const beforeDrag = $('#generator-large-gear').getAttribute('transform');
+  crankHit.dispatchEvent(new frame.contentWindow.PointerEvent('pointerdown', {clientX:dragStart.x, clientY:dragStart.y, button:0, pointerId:7, bubbles:true}));
+  crankHit.dispatchEvent(new frame.contentWindow.PointerEvent('pointermove', {clientX:dragEnd.x, clientY:dragEnd.y, button:0, pointerId:7, bubbles:true}));
+  crankHit.dispatchEvent(new frame.contentWindow.PointerEvent('pointerup', {clientX:dragEnd.x, clientY:dragEnd.y, button:0, pointerId:7, bubbles:true}));
+  await new Promise(resolve => setTimeout(resolve, 550));
+  check($('#generator-large-gear').getAttribute('transform') !== beforeDrag && Number.parseFloat(voltage.textContent) > 0,
+    'Dragging the projected handle updates the gear angle and voltage');
+  frame.contentWindow.document.dispatchEvent(new KeyboardEvent('keydown', {key:'v', bubbles:true, cancelable:true}));
+  check(generatorStage.dataset.view === 'rotor' && $('#generator-crank').getAttribute('tabindex') === '-1',
+    'V switches back to the front rotor view and removes the hidden crank from keyboard focus');
+  $('[data-generator-view="assembly"]').click();
+  check(!/onshape/i.test(frame.contentDocument.querySelector('.battlebot-stage-head').textContent),
+    'BattleBot preview header omits the redundant Onshape label');
   const botDescription = $('#battlebot .project-copy > p:not(.project-subtitle)').textContent;
   check(/quick swaps between matches or after damage/i.test(botDescription) && /2206 brushless motor.*22 mm diameter × 6 mm stator/i.test(botDescription) &&
     /two brushed motors drive the rear wheels/i.test(botDescription),
     'BattleBot description covers replaceable armor, motor size, and rear-wheel drive');
   const battlebot = $('#battlebot-model');
+  check(battlebot.getAttribute('camera-orbit') === '225deg 55deg 90%',
+    'BattleBot opens in the isometric drivetrain view');
+  check(battlebot.getAttribute('shadow-intensity') === '0', 'BattleBot has no generated ground shadow');
   const explode = $('#battlebot-explode');
   const drive = $('#drivetrain-button');
   battlebot.scrollIntoView({ block: 'center' });
@@ -197,6 +462,21 @@ try {
   const motorPulleyIndex = nodeIndex('Brushless motor timing pulley');
   const weaponAxisIndex = nodeIndex('Weapon shaft axis');
   const weaponPulleyIndex = nodeIndex('Weapon pulley');
+  const bodyNode = model.nodes.find(node => node.name === 'Main Body');
+  const bodyXBounds = model.meshes[bodyNode.mesh].primitives
+    .map(primitive => model.accessors[primitive.attributes.POSITION]);
+  const bodyMinX = Math.min(...bodyXBounds.map(bounds => bounds.min[0]));
+  const bodyMaxX = Math.max(...bodyXBounds.map(bounds => bounds.max[0]));
+  const weaponShaft = model.nodes[nodeIndex('Weapon shaft extension')];
+  const weaponShaftBounds = primitiveBounds(weaponShaft);
+  const weaponShaftLength = weaponShaftBounds.max[1] - weaponShaftBounds.min[1];
+  const weaponAxis = model.nodes[weaponAxisIndex];
+  const weaponShaftCenterX = weaponAxis.translation[0] + weaponShaft.translation[1];
+  const weaponShaftMinX = weaponShaftCenterX + weaponShaftBounds.min[1];
+  const weaponShaftMaxX = weaponShaftCenterX + weaponShaftBounds.max[1];
+  check(Math.abs(weaponShaftLength - (bodyMaxX - bodyMinX - .010)) < 1e-6 &&
+    weaponShaftMinX >= bodyMinX + .0049 && weaponShaftMaxX <= bodyMaxX - .0049,
+    'Weapon shaft ends inset from the body side walls');
   check(localYAxis(motorAxis.rotation).every((value,index) => Math.abs(value-[1,0,0][index]) < 1e-6) &&
     Math.abs(motorAxis.translation[0] - model.nodes[weaponAxisIndex].translation[0]) < 1e-6 &&
     Math.abs(motorAxis.translation[1] - .023) < 1e-6 && Math.abs(motorAxis.translation[2] - (-.0299197044)) < 1e-6 &&
@@ -284,12 +564,34 @@ try {
     explode.click();
     await until(() => $('#battlebot-status').textContent === 'Assembly restored.');
   } else {
+    const accelerationStarted = frame.contentWindow.performance.now();
     drive.click();
-    check(drive.getAttribute('aria-pressed') === 'true' && battlebot.animationName === 'Drivetrain',
-      'Run button starts the model drivetrain clip');
+    check(drive.getAttribute('aria-pressed') === 'true' && battlebot.animationName === 'Drivetrain' && drive.disabled && explode.disabled && battlebot.timeScale === 0,
+      'Run starts the drivetrain from zero speed and guards controls during acceleration');
+    await until(() => battlebot.timeScale > 0 && battlebot.timeScale < 1);
+    check(!battlebot.paused, 'Drivetrain gradually accelerates through intermediate playback speeds');
+    await until(() => !drive.disabled && battlebot.timeScale === 1);
+    const accelerationDuration = frame.contentWindow.performance.now() - accelerationStarted;
+    check(accelerationDuration >= 1350 && accelerationDuration < 2500,
+      'Drivetrain takes about 1.5 seconds to reach full speed');
+    const beforeStopTime = battlebot.currentTime;
+    const coastStarted = frame.contentWindow.performance.now();
     drive.click();
-    check(drive.getAttribute('aria-pressed') === 'false' && battlebot.currentTime === 0,
-      'Stop button resets the drivetrain animation');
+    check(drive.getAttribute('aria-pressed') === 'false' && drive.disabled && explode.disabled && battlebot.currentTime >= beforeStopTime - .01,
+      'Stop begins coasting without resetting the current pose');
+    await until(() => battlebot.timeScale > 0 && battlebot.timeScale < 1);
+    check(!battlebot.paused, 'Drivetrain continues moving while it decelerates');
+    await until(() => !drive.disabled && battlebot.paused && battlebot.timeScale === 0);
+    const coastDuration = frame.contentWindow.performance.now() - coastStarted;
+    check(coastDuration >= 1350 && coastDuration < 2500,
+      'Drivetrain coasts down over about 1.5 seconds');
+    const stoppedTime = battlebot.currentTime;
+    check(stoppedTime > beforeStopTime && stoppedTime > 0, 'Coasting stops at its current nonzero animation pose');
+    drive.click();
+    check(battlebot.currentTime >= stoppedTime - .01, 'Restart resumes the coasted pose without a jump to zero');
+    await until(() => !drive.disabled && battlebot.timeScale === 1);
+    drive.click();
+    await until(() => !drive.disabled && battlebot.paused && battlebot.timeScale === 0);
     explode.click();
     check(explode.disabled && drive.disabled && $('#battlebot-status').textContent.startsWith('Lifting'),
       'Exploding disables both controls while the animation runs');
