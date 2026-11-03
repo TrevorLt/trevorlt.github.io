@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111111">
   <title>Trevor Lin — Exploring Robotics</title>
-  <meta name="description" content="Trevor Lin is a computer engineering student at Northwestern interested in mechatronics and robotics. He learns by designing, building, and testing physical systems.">
+  <meta name="description" content="Trevor Lin studies computer engineering and is pursuing a Robotics Certificate at Northwestern University, with a focus on mechatronics and robotics.">
   <link rel="canonical" href="https://trevorlt.github.io/">
   <meta property="og:title" content="Trevor Lin — Exploring Robotics">
   <meta property="og:description" content="Exploring mechatronics and robotics through hands-on building, electronics, and software.">
@@ -15,9 +15,11 @@
   <link rel="preload" href="assets/anton.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans-semibold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261103-battlebot-v5">
+  <link rel="stylesheet" href="styles.css?v=20261103-portfolio-v21">
+  <link rel="stylesheet" href="assets/tech-text.bundle.css?v=20261103-reactbits-v2">
   <script id="model-viewer-loader" type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.4.0/model-viewer.min.js"></script>
-  <script src="script.js?v=20261103-battlebot-v10" defer></script>
+  <script src="script.js?v=20261103-portfolio-v14" defer></script>
+  <script src="assets/tech-text.bundle.js?v=20261103-reactbits-v3" defer></script>
   <noscript><style>.scanner-stage canvas,.scanner-stage .scan-controls,.codex-demo .demo-styles,.codex-demo .demo-scenarios{display:none}.scanner-stage .scan-fallback{display:block}</style></noscript>
 </head>
 <body>
@@ -28,26 +30,26 @@
 </header>
 <main>
   <section class="hero" id="home" aria-labelledby="name">
-    <div class="hero-title"><h1 id="name" translate="no"><span>Trevor</span><span>Lin</span></h1></div>
+    <div class="hero-title"><h1 id="name" class="visually-hidden" translate="no">Trevor Lin</h1><div id="tech-text-root" class="hero-tech-wordmark" aria-hidden="true"><span class="tech-heading-mount hero-tech-mount" data-tech-text="TREVOR">TREVOR</span><span class="tech-heading-mount hero-tech-mount" data-tech-text="LIN">LIN</span></div></div>
     <div class="hero-copy"><p>Exploring mechatronics &amp; robotics.<br>Learning by making things work.</p><a class="button" href="#work">Explore my work <span aria-hidden="true">↗</span></a></div>
-    <div class="hero-foot"><span>Computer engineering · Northwestern.</span><span>Learning by building.</span></div>
+    <div class="hero-foot"><span>Computer Engineering + Robotics Certificate - Northwestern.</span></div>
   </section>
 
   <section class="work section" id="work" tabindex="-1" aria-labelledby="work-title">
-    <div class="section-intro"><h2 id="work-title">Selected work</h2><p>Exploring how machines sense the world.<br>Making software that’s clearer to use.</p></div>
-    <div class="project-index" aria-label="Project index"><a href="#battlebot">BattleBot <span>Mechanical</span></a><a href="#cryptscan">CryptScan <span>Hardware</span></a><a href="#codex">Codex Usage Status <span>Software</span></a></div>
+    <div class="section-intro"><h2 id="work-title"><span class="visually-hidden">Selected work</span><span class="tech-heading-mount" data-tech-text="Selected work" aria-hidden="true">Selected work</span></h2><p>Exploring how machines sense the world.<br>Making software that’s clearer to use.</p></div>
+    <div class="project-index" aria-label="Project index"><a href="#battlebot">BattleBot <span>Mechanical</span></a><a href="#ac-generator">3-Phase AC Generator <span>Electrical</span></a><a href="#cryptscan">CryptScan <span>Hardware</span></a><a href="#codex">Codex Usage Status <span>Software</span></a></div>
 
     <article class="project battlebot-project" id="battlebot" aria-labelledby="battlebot-title">
       <div class="project-copy">
-        <h3 id="battlebot-title" translate="no">BattleBot</h3>
+        <h3 id="battlebot-title" translate="no"><span class="visually-hidden">BattleBot</span><span class="tech-heading-mount" data-tech-text="BattleBot" aria-hidden="true">BattleBot</span></h3>
         <p class="project-subtitle">Antweight · vertical spinner</p>
         <p>An Antweight vertical spinner with replaceable 3D-printed ABS armor, designed for quick swaps between matches or after damage. A 2206 brushless motor (22 mm diameter × 6 mm stator) drives the weapon; two brushed motors drive the rear wheels.</p>
         <dl class="project-facts"><div><dt>Class</dt><dd>Antweight</dd></div><div><dt>Weapon</dt><dd>Vertical spinner</dd></div><div><dt>Armor</dt><dd>Replaceable ABS</dd></div><div><dt>Platform</dt><dd>Onshape</dd></div></dl>
         <a class="project-link" href="https://cad.onshape.com/documents/bdc75ecbf621cda3da9ebd5b/w/fc0be3140bfd8cab092efe52/e/fe9df441b8d8cb29e966e12a" target="_blank" rel="noopener noreferrer">Open full CAD in Onshape <span aria-hidden="true">↗</span></a>
       </div>
       <div class="battlebot-stage" aria-label="Interactive BattleBot 3D model">
-        <div class="battlebot-stage-head"><span>ONSHAPE · DRIVETRAIN PREVIEW</span><span>Drag to rotate · Scroll to zoom</span></div>
-        <model-viewer id="battlebot-model" src="assets/battle-bot.glb?v=20261103-concept-v17" alt="Interactive Antweight vertical-spinner BattleBot showing replaceable ABS armor, a 2206 brushless motor cross-mounted to the upright four-hole plate, a direct belt-driven weapon, two rear brushed motors, and the original wheels." camera-controls camera-orbit="90deg 60deg 95%" exposure="0.78" touch-action="pan-y" loading="eager" shadow-intensity="1" animation-crossfade-duration="0" interaction-prompt="none"></model-viewer>
+        <div class="battlebot-stage-head"><span>DRIVETRAIN PREVIEW</span><span>Drag to rotate · Scroll to zoom</span></div>
+        <model-viewer id="battlebot-model" src="assets/battle-bot.glb?v=20261102-isometric-v20" alt="Interactive Antweight vertical-spinner BattleBot showing replaceable ABS armor, a 2206 brushless motor cross-mounted to the upright four-hole plate, a direct belt-driven weapon, two rear brushed motors, and the original wheels." camera-controls camera-orbit="225deg 55deg 90%" exposure="0.78" touch-action="pan-y" loading="eager" shadow-intensity="0" animation-crossfade-duration="0" interaction-prompt="none"></model-viewer>
         <div class="battlebot-actions">
           <button class="battlebot-action" id="battlebot-explode" type="button" aria-pressed="false" disabled>Explode assembly</button>
           <button class="battlebot-action" id="drivetrain-button" type="button" aria-pressed="false" disabled>Run drivetrain</button>
@@ -56,9 +58,126 @@
         <p class="project-caption">Interactive preview, animated for clarity.</p>
       </div>
     </article>
+
+    <article class="project generator-project" id="ac-generator" aria-labelledby="generator-title">
+      <div class="project-copy">
+        <h3 id="generator-title" translate="no"><span class="visually-hidden">3-Phase AC Generator</span><span class="tech-heading-mount" data-tech-text="3-Phase AC Generator" aria-hidden="true">3-Phase AC Generator</span></h3>
+        <p class="project-subtitle">A hand-cranked electromagnetic build.</p>
+        <p>Our team designed and assembled this generator from custom 3D-printed and laser-cut parts. Eight N52 magnets (10 × 5 × 40 mm) spin past eight stationary copper coils, each wound with 60 turns of 0.6 mm wire. A 3:1 gear pair drives the rotor from the hand crank. The report records 2.72 V peak at 25 Hz, 0.49 A peak, and 1.33 W peak, with 5.6 Ω internal resistance.</p>
+        <dl class="project-facts"><div><dt>Output</dt><dd>Three-phase AC</dd></div><div><dt>Rotor</dt><dd>8 N52 magnets</dd></div><div><dt>Stator</dt><dd>8 × 60-turn coils</dd></div><div><dt>Drive</dt><dd>3:1 hand crank</dd></div></dl>
+        <a class="project-link" href="https://cad.onshape.com/documents/00c556d90785a9dc82e9c061/w/4a3bde9415cc6add804a8796/e/6e7e1c93375c04b86cba874c" target="_blank" rel="noopener noreferrer">Open full CAD in Onshape <span aria-hidden="true">↗</span></a>
+      </div>
+      <div class="generator-stage" id="generator-stage" data-view="rotor" aria-label="Interactive three-phase AC generator preview">
+        <div class="generator-stage-head">
+          <span>GENERATOR PREVIEW</span>
+          <div class="generator-view-controls" role="group" aria-label="Generator view">
+            <button type="button" data-generator-view="rotor" aria-pressed="true">Rotor</button>
+            <button type="button" data-generator-view="assembly" aria-pressed="false">Full assembly</button>
+          </div>
+        </div>
+        <div class="generator-workbench">
+          <svg id="generator-visual" class="generator-visual" viewBox="0 0 560 500" role="group" aria-label="Generator mechanism illustration">
+            <defs>
+              <radialGradient id="generator-backdrop"><stop stop-color="#343c32"/><stop offset="1" stop-color="#151a15"/></radialGradient>
+              <linearGradient id="generator-copper" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#ffbf78"/><stop offset=".35" stop-color="#d5682c"/><stop offset=".72" stop-color="#8d381e"/><stop offset="1" stop-color="#e9904c"/></linearGradient>
+              <linearGradient id="generator-shell" x1="0" x2="1"><stop stop-color="#667068"/><stop offset=".5" stop-color="#333c35"/><stop offset="1" stop-color="#7d887d"/></linearGradient>
+              <linearGradient id="generator-rotor-metal" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#d8d9ca"/><stop offset=".55" stop-color="#81877c"/><stop offset="1" stop-color="#454d46"/></linearGradient>
+              <linearGradient id="generator-bearing-metal" x1="0" x2="1" y1="0" y2="1"><stop stop-color="#f6f4e9"/><stop offset=".35" stop-color="#aeb5a8"/><stop offset=".7" stop-color="#626b62"/><stop offset="1" stop-color="#e1dfd2"/></linearGradient>
+              <radialGradient id="generator-magnet"><stop stop-color="#dafa9c"/><stop offset="1" stop-color="#738b52"/></radialGradient>
+              <filter id="generator-glow" x="-100%" y="-100%" width="300%" height="300%"><feGaussianBlur stdDeviation="5" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+              <g id="generator-coil-template">
+                <rect x="-51" y="-40" width="102" height="80" rx="22" fill="url(#generator-copper)" stroke="#4d281c" stroke-width="3"/>
+                <path d="M-33-35Q0-43 33-35 M-40-30Q0-38 40-30 M-44-25Q0-33 44-25 M-46-20Q0-28 46-20 M-47-15Q0-23 47-15 M-48-10Q0-18 48-10 M-48-5Q0-13 48-5 M-48 0Q0-8 48 0 M-48 5Q0-3 48 5 M-48 10Q0 2 48 10 M-47 15Q0 7 47 15 M-46 20Q0 12 46 20 M-44 25Q0 17 44 25 M-40 30Q0 22 40 30 M-33 35Q0 27 33 35" fill="none" stroke="#ffd29a" stroke-opacity=".85" stroke-width="2"/>
+              </g>
+              <g id="generator-magnet-template"><rect x="-13" y="-23" width="26" height="46" rx="5" fill="url(#generator-magnet)" stroke="#20251d" stroke-width="3"/><path d="M-7-17H7" stroke="#f7f7e9" stroke-opacity=".6" stroke-width="2"/></g>
+            </defs>
+            <rect width="560" height="500" rx="12" fill="url(#generator-backdrop)"/>
+
+            <g id="generator-rotor-view" class="generator-view">
+              <circle cx="280" cy="245" r="210" fill="none" stroke="#d9d8c9" stroke-width="8"/>
+              <circle cx="280" cy="245" r="194" fill="none" stroke="#596558" stroke-width="12"/>
+              <g id="generator-front-coils" aria-hidden="true">
+                <use href="#generator-coil-template" transform="translate(280 91)"/><use href="#generator-coil-template" transform="translate(389 136) rotate(45)"/><use href="#generator-coil-template" transform="translate(434 245) rotate(90)"/><use href="#generator-coil-template" transform="translate(389 354) rotate(135)"/>
+                <use href="#generator-coil-template" transform="translate(280 399) rotate(180)"/><use href="#generator-coil-template" transform="translate(171 354) rotate(225)"/><use href="#generator-coil-template" transform="translate(126 245) rotate(270)"/><use href="#generator-coil-template" transform="translate(171 136) rotate(315)"/>
+              </g>
+              <g class="generator-front-rotor-transition">
+              <g id="generator-front-rotor" class="generator-front-rotor">
+                <circle cx="280" cy="245" r="113" fill="url(#generator-rotor-metal)" stroke="#e8e8d8" stroke-width="5"/>
+                <circle cx="280" cy="245" r="103" fill="none" stroke="#454d46" stroke-width="3"/>
+                <use href="#generator-magnet-template" transform="translate(280 168)"/><use href="#generator-magnet-template" transform="translate(334 191) rotate(45)"/><use href="#generator-magnet-template" transform="translate(357 245) rotate(90)"/><use href="#generator-magnet-template" transform="translate(334 299) rotate(135)"/>
+                <use href="#generator-magnet-template" transform="translate(280 322) rotate(180)"/><use href="#generator-magnet-template" transform="translate(226 299) rotate(225)"/><use href="#generator-magnet-template" transform="translate(203 245) rotate(270)"/><use href="#generator-magnet-template" transform="translate(226 191) rotate(315)"/>
+              </g>
+              </g>
+              <g id="generator-front-bearing" aria-label="Central rotor bearing">
+                <circle cx="280" cy="245" r="42" fill="url(#generator-bearing-metal)" stroke="#f8f4e8" stroke-width="5"/>
+                <circle cx="280" cy="245" r="32" fill="#303831" stroke="#737a70" stroke-width="5"/>
+                <circle cx="280" cy="245" r="22" fill="url(#generator-bearing-metal)" stroke="#d8d9ca" stroke-width="3"/>
+                <circle cx="280" cy="245" r="13" fill="#171c18" stroke="#535d53" stroke-width="3"/>
+                <circle cx="280" cy="245" r="5" fill="#080b09"/>
+              </g>
+              <g id="generator-lightning" class="generator-lightning" fill="none" stroke="#e5f7ff" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path class="generator-cloud" d="M60 90Q115 44 175 77T300 67T500 85M60 399Q130 361 205 396T350 387T500 403"/>
+                <path id="generator-lightning-glow" class="generator-lightning-glow" filter="url(#generator-glow)" pathLength="1"/>
+                <path id="generator-lightning-bolt" class="generator-lightning-bolt" pathLength="1"/>
+              </g>
+            </g>
+
+            <g id="generator-assembly-view" class="generator-view" aria-hidden="true">
+              <g id="generator-isometric" transform="matrix(.88 0 0 1 26 0)">
+              <circle id="generator-rear-face" cx="165" cy="225" r="130" fill="#687167" stroke="#d8ddd0" stroke-width="6"/>
+              <path id="generator-cylinder-wall" d="M234.8 115.3 289.8 150.3A130 130 0 0 1 150.2 369.7L95.2 334.7A130 130 0 0 1 234.8 115.3Z" fill="url(#generator-shell)" stroke="#a1a99b" stroke-width="3"/>
+              <path d="M54 158 109 193M39 229 94 264M75 302 130 337" stroke="#8b9786" stroke-opacity=".32" stroke-width="2"/>
+              <g id="generator-stator-face" transform="translate(220 260)">
+                <circle r="130" fill="#1a231c" stroke="#e3e2d5" stroke-width="9"/>
+                <circle r="122" fill="none" stroke="#65705f" stroke-width="5"/>
+                <g id="generator-assembly-coils" aria-hidden="true">
+                  <use href="#generator-coil-template" transform="translate(0 -100) scale(.7 .62)"/><use href="#generator-coil-template" transform="translate(71 -71) rotate(45) scale(.7 .62)"/><use href="#generator-coil-template" transform="translate(100 0) rotate(90) scale(.7 .62)"/><use href="#generator-coil-template" transform="translate(71 71) rotate(135) scale(.7 .62)"/>
+                  <use href="#generator-coil-template" transform="translate(0 100) rotate(180) scale(.7 .62)"/><use href="#generator-coil-template" transform="translate(-71 71) rotate(225) scale(.7 .62)"/><use href="#generator-coil-template" transform="translate(-100 0) rotate(270) scale(.7 .62)"/><use href="#generator-coil-template" transform="translate(-71 -71) rotate(315) scale(.7 .62)"/>
+                </g>
+                <circle r="74" fill="url(#generator-rotor-metal)" stroke="#edf0e5" stroke-width="4"/>
+                <g id="generator-assembly-rotor">
+                  <use href="#generator-magnet-template" transform="translate(0 -51) scale(.58)"/><use href="#generator-magnet-template" transform="translate(36 -36) rotate(45) scale(.58)"/><use href="#generator-magnet-template" transform="translate(51 0) rotate(90) scale(.58)"/><use href="#generator-magnet-template" transform="translate(36 36) rotate(135) scale(.58)"/>
+                  <use href="#generator-magnet-template" transform="translate(0 51) rotate(180) scale(.58)"/><use href="#generator-magnet-template" transform="translate(-36 36) rotate(225) scale(.58)"/><use href="#generator-magnet-template" transform="translate(-51 0) rotate(270) scale(.58)"/><use href="#generator-magnet-template" transform="translate(-36 -36) rotate(315) scale(.58)"/>
+                </g>
+                <g id="generator-assembly-bearing" aria-label="Rotor shaft bearing"><circle r="26" fill="url(#generator-bearing-metal)" stroke="#f5f4ea" stroke-width="4"/><circle r="17" fill="#303831" stroke="#737a70" stroke-width="3"/><circle r="9" fill="#111512"/></g>
+              </g>
+              <g id="generator-drive-train" class="generator-drive-train">
+                <path id="generator-rotor-shaft" d="M220 260 330 330" stroke="#c6c9b9" stroke-width="13"/><path d="M220 260 330 330" stroke="#8c9788" stroke-width="4"/>
+                <g id="generator-gear-plane" transform="translate(330 330)">
+                  <g id="generator-shaft-collar" transform="translate(-13 -8)"><circle r="17" fill="url(#generator-bearing-metal)" stroke="#f5f4ea" stroke-width="3"/></g>
+                  <g id="generator-small-gear"><path class="generator-gear generator-small-gear-path" fill="#d5682c" stroke="#ffbf78" stroke-width="3"/><circle r="10" fill="#313a32" stroke="#f0c18b" stroke-width="4"/></g>
+                  <g id="generator-large-gear"><path class="generator-gear generator-large-gear-path" transform="translate(96 0)" fill="#89a86b" stroke="#dafa9c" stroke-width="4"/><circle cx="96" cy="0" r="40" fill="#374236" stroke="#dafa9c" stroke-width="4"/><circle cx="96" cy="0" r="15" fill="#20271f" stroke="#c6d99c" stroke-width="4"/></g>
+                  <g id="generator-crank" role="button" tabindex="0" aria-label="Crank handle. Drag in a circle to turn, or press Enter to accelerate.">
+                    <path d="M96 0V-80H130" fill="none" stroke="#a8b09e" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><path d="M96 0V-80H130" fill="none" stroke="#eff0df" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+                    <rect x="114" y="-97" width="40" height="34" rx="12" fill="url(#generator-copper)" stroke="#542c1c" stroke-width="3"/><path d="M122-90v20M132-90v20M142-90v20" stroke="#ffd29a" stroke-width="2"/>
+                    <path id="generator-crank-hit" d="M108-104h54v48H108z" fill="transparent" pointer-events="all" aria-hidden="true"/>
+                  </g>
+                </g>
+              </g>
+              </g>
+            </g>
+          </svg>
+          <div class="generator-meter" hidden>
+            <span class="generator-meter-label">GENERATED VOLTAGE</span>
+            <output id="generator-voltage" class="generator-voltage" aria-label="Estimated generated voltage">0.00 V</output>
+            <span class="generator-frequency-label">Crank <output id="generator-frequency" aria-label="Crank frequency">0.0 Hz</output></span>
+            <svg id="generator-voltage-graph" class="generator-voltage-graph" viewBox="0 0 320 132" role="img" aria-label="Estimated AC voltage waveform with positive and negative voltage">
+              <path class="generator-graph-grid" d="M35 20H312M35 108H312"/>
+              <path class="generator-graph-zero" d="M35 12V116M35 64H312"/>
+              <text x="5" y="24" class="generator-graph-label">+V</text><text x="12" y="68" class="generator-graph-label">0</text><text x="5" y="112" class="generator-graph-label">−V</text>
+              <path id="generator-voltage-line" class="generator-voltage-line" d="M35 64H312"/>
+            </svg>
+          </div>
+        </div>
+        <p class="generator-hint" id="generator-hint">Press Full assembly or V to reveal the gears and hand crank.</p>
+        <p class="project-caption">Interactive preview, animated for clarity.</p>
+        <p id="generator-status" class="generator-status" role="status" aria-live="polite"></p>
+      </div>
+    </article>
+
     <article class="project scanner-project" id="cryptscan" aria-labelledby="scanner-title">
       <div class="project-copy">
-        <h3 id="scanner-title" translate="no">CryptScan</h3>
+        <h3 id="scanner-title" translate="no"><span class="visually-hidden">CryptScan</span><span class="tech-heading-mount" data-tech-text="CryptScan" aria-hidden="true">CryptScan</span></h3>
         <p class="project-subtitle">From distance measurements to 3D geometry.</p>
         <p>A mechatronics prototype built around a Raspberry Pi Pico 2 and a VL53L1X time-of-flight distance sensor, designed to reconstruct the approximate geometry of small objects through controlled rotation and layered measurements.</p>
         <dl class="project-facts"><div><dt>Focus</dt><dd>Mechatronics &amp; sensing</dd></div><div><dt>Stage</dt><dd>In development</dd></div><div><dt>Platform</dt><dd>Raspberry Pi Pico 2</dd></div></dl>
@@ -102,7 +221,7 @@
         <noscript><p>In the app, two rings show remaining 5-hour and weekly usage. A larger readout is also available.</p></noscript>
       </div>
       <div class="project-copy">
-        <h3 id="codex-title" translate="no">Codex Usage Status</h3>
+        <h3 id="codex-title" translate="no"><span class="visually-hidden">Codex Usage Status</span><span class="tech-heading-mount" data-tech-text="Codex Usage Status" aria-hidden="true">Codex Usage Status</span></h3>
         <p class="project-subtitle">Usage, at a glance.</p>
         <p>A macOS companion that makes Codex usage limits visible at a glance. An independently maintained continuation of an existing open-source app.</p>
         <dl class="project-facts"><div><dt>Focus</dt><dd>Interface & release iteration</dd></div><div><dt>Stage</dt><dd>Released</dd></div><div><dt>Platform</dt><dd>macOS</dd></div></dl>
@@ -113,12 +232,12 @@
   </section>
 
   <section class="about section" id="about" aria-labelledby="about-title">
-    <div class="section-intro"><h2 id="about-title">About me</h2><p>I like figuring things out by building them.</p></div>
+    <div class="section-intro"><h2 id="about-title"><span class="visually-hidden">About me</span><span class="tech-heading-mount" data-tech-text="About me" aria-hidden="true">About me</span></h2><p>I like figuring things out by building them.</p></div>
     <div class="about-columns"><p>I’m Trevor, a <mark>computer engineering student</mark> at Northwestern University interested in mechatronics and robotics. I’m drawn to the point where mechanical design, electronics, and software come together—and to figuring out how they work as a physical system.</p><p>I learn best with <mark>something in my hands</mark>: a part to model, a wire to solder, or a mechanism to assemble and troubleshoot. My projects have taken me from building combat robots and assembling and tuning FPV drones to developing a distance-sensor-based 3D scanner. I enjoy making a first version work, seeing where it falls short, and trying again. That’s how I’m exploring robotics, one build at a time.</p></div>
   </section>
 
   <section class="contact section" id="contact" aria-labelledby="contact-title">
-    <h2 id="contact-title">Let’s compare notes.</h2><div class="contact-row"><p>Building something in mechatronics<br>or robotics? I’d love to compare notes.</p><a class="button" href="https://github.com/TrevorLt">Find me on GitHub <span aria-hidden="true">↗</span></a></div>
+    <h2 id="contact-title"><span class="visually-hidden">Let’s compare notes.</span><span class="tech-heading-mount" data-tech-text="Let’s compare notes." aria-hidden="true">Let’s compare notes.</span></h2><div class="contact-row"><p>Building something in mechatronics<br>or robotics? I’d love to compare notes.</p><a class="button" href="https://github.com/TrevorLt">Find me on GitHub <span aria-hidden="true">↗</span></a></div>
   </section>
 </main>
 <footer><a class="footer-name" href="#home" aria-label="Back to top">Trevor Lin</a><div class="footer-bottom"><span>Made with curiosity.</span><a href="https://github.com/TrevorLt/trevorlt.github.io">Website source</a><span>© 2026 Trevor Lin</span></div><p class="photo-credit">Pico 2 photo: <a href="https://commons.wikimedia.org/w/index.php?curid=169801139">Profpcde, Wikimedia Commons</a> · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>.</p></footer>
