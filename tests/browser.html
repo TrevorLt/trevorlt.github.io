@@ -142,6 +142,171 @@ try {
     check(summary.getAttribute('aria-expanded') === 'false' && $(selector + ' .project-detail').inert,
       selector + ' closes and disables hidden content');
   }
+  await load('../?quota=normal');
+  const captions = [...frame.contentDocument.querySelectorAll('.project-caption')].map(item => item.textContent.trim());
+  const liveStatus = $('#battlebot-status');
+  check(captions.length === 3 && captions.every(text => text === 'Interactive preview, animated for clarity.') &&
+    !frame.contentDocument.querySelector('.battlebot-concept-note,.battlebot-stage-foot') &&
+    liveStatus.getAttribute('role') === 'status' && liveStatus.getAttribute('aria-live') === 'polite' && liveStatus.getBoundingClientRect().width <= 1,
+    'All three project previews use one short shared caption');
+  const botDescription = $('#battlebot .project-copy > p:not(.project-subtitle)').textContent;
+  check(/quick swaps between matches or after damage/i.test(botDescription) && /2206 brushless motor.*22 mm diameter × 6 mm stator/i.test(botDescription) &&
+    /two brushed motors drive the rear wheels/i.test(botDescription),
+    'BattleBot description covers replaceable armor, motor size, and rear-wheel drive');
+  const battlebot = $('#battlebot-model');
+  const explode = $('#battlebot-explode');
+  const drive = $('#drivetrain-button');
+  battlebot.scrollIntoView({ block: 'center' });
+  const glb = await (await fetch('../assets/battle-bot.glb', { cache: 'no-store' })).arrayBuffer();
+  const header = new DataView(glb);
+  const jsonLength = header.getUint32(12, true);
+  const binStart = 20 + jsonLength + 8;
+  const model = JSON.parse(new TextDecoder().decode(glb.slice(20, 20 + jsonLength)).trim());
+  const nativeWheelNodes = model.nodes.flatMap((node, index) => /^Native wheel motion /.test(node.name || '') ? [index] : []);
+  check(header.getUint32(0, true) === 0x46546c67 && header.getUint32(4, true) === 2 &&
+    header.getUint32(8, true) === glb.byteLength && header.getUint32(16, true) === 0x4e4f534a,
+    'BattleBot asset has a valid GLB v2 header and JSON chunk');
+  check(model.animations.flatMap(animation => animation.channels).every(channel =>
+    !model.nodes[channel.target.node].matrix), 'BattleBot animations target TRS nodes, not CAD matrices');
+  check(nativeWheelNodes.length === 4 &&
+    !model.meshes.some(mesh => /^(Side wheel|Wheel hub)/.test(mesh.name || '')) &&
+    !model.nodes.some(node => /^(Left|Right) side wheel/.test(node.name || '')),
+    'BattleBot preserves four source wheels without duplicate concept wheels');
+  const nodeIndex = name => model.nodes.findIndex(node => node.name === name);
+  const motorBase = model.nodes[nodeIndex('2206 cross-mount center')];
+  const motorStator = model.nodes[nodeIndex('2206 brushless motor stator')];
+  const motorAxis = model.nodes[nodeIndex('2206 motor shaft axis')];
+  const primitiveBounds = node => {
+    const mesh = model.meshes[node.mesh];
+    return model.accessors[mesh.primitives[0].attributes.POSITION];
+  };
+  const motorLugs = model.nodes.filter(node => /^2206 motor base mounting lug /.test(node.name || ''));
+  const motorScrews = model.nodes.filter(node => /^2206 mounting screw shaft /.test(node.name || ''));
+  const screwOffsets = motorScrews.map(node => [Number((node.translation[1] - motorBase.translation[1]).toFixed(6)), Number((node.translation[2] - motorBase.translation[2]).toFixed(6))]);
+  const crossPattern = [[0,.008],[0,-.008],[.008,0],[-.008,0]];
+  const baseBounds = primitiveBounds(motorBase);
+  const statorBounds = primitiveBounds(motorStator);
+  check(motorLugs.length === 4 && motorScrews.length === 4 &&
+    Math.abs(motorBase.translation[0] + baseBounds.max[0] - (-.003)) < 1e-6 &&
+    Math.abs(motorBase.translation[1] - .023) < 1e-6 && Math.abs(motorBase.translation[2] - (-.0299197044)) < 1e-6 &&
+    crossPattern.every(expected => screwOffsets.some(actual => actual.every((value,index) => Math.abs(value-expected[index]) < 1e-6))) &&
+    Math.abs(statorBounds.max[0] - statorBounds.min[0] - .006) < 1e-6 && Math.abs(statorBounds.max[1] - statorBounds.min[1] - .022) < 1e-6 &&
+    !model.nodes.some(node => /support web|bevel|countershaft/i.test(node.name || '')),
+    '2206 cross base sits flush on the upright plate and screws match its four CAD holes');
+  const localYAxis = ([x,y,z,w]) => [2*(x*y-z*w),1-2*(x*x+z*z),2*(y*z+x*w)];
+  const motorPulleyIndex = nodeIndex('Brushless motor timing pulley');
+  const weaponAxisIndex = nodeIndex('Weapon shaft axis');
+  const weaponPulleyIndex = nodeIndex('Weapon pulley');
+  check(localYAxis(motorAxis.rotation).every((value,index) => Math.abs(value-[1,0,0][index]) < 1e-6) &&
+    Math.abs(motorAxis.translation[0] - model.nodes[weaponAxisIndex].translation[0]) < 1e-6 &&
+    Math.abs(motorAxis.translation[1] - .023) < 1e-6 && Math.abs(motorAxis.translation[2] - (-.0299197044)) < 1e-6 &&
+    motorAxis.children.includes(motorPulleyIndex) &&
+    model.nodes[motorPulleyIndex].translation.every(value => Math.abs(value) < 1e-6) &&
+    model.nodes[weaponAxisIndex].children.includes(weaponPulleyIndex),
+    'Motor shaft points through the upright cross mount and shares the weapon pulley plane');
+  const rearMotors = model.nodes.filter(node => /^(Left|Right) rear brushed motor$/.test(node.name || ''));
+  const rearShafts = model.nodes.filter(node => /^(Left|Right) rear wheel drive shaft$/.test(node.name || ''));
+  const rearSpins = model.nodes.filter(node => /^Rear wheel spin /.test(node.name || ''));
+  check(rearMotors.length === 2 && rearShafts.length === 2 && rearSpins.length === 2,
+    'BattleBot adds two concept rear motors and animatable shafts for the native rear wheels');
+  check(!model.nodes.some(node => /bevel|countershaft/i.test(node.name || '')) &&
+    model.nodes.some(node => node.name === 'Brushless motor timing pulley') &&
+    model.nodes.some(node => node.name === 'Weapon pulley') &&
+    model.nodes.filter(node => /^Timing belt link /.test(node.name || '')).length === 32,
+    'Brushless motor drives the weapon directly with a shared-plane timing belt');
+  function endpoint(animation, channel, key) {
+    const sampler = animation.samplers[channel.sampler];
+    const accessor = model.accessors[sampler.output];
+    const view = model.bufferViews[accessor.bufferView];
+    const keyValue = sampler.interpolation === 'CUBICSPLINE' ? key * 3 + 1 : key;
+    const offset = binStart + (view.byteOffset || 0) + (accessor.byteOffset || 0) + keyValue * 12;
+    return [0, 4, 8].map(byte => header.getFloat32(offset + byte, true));
+  }
+  const explodeClip = model.animations.find(animation => animation.name === 'Explode');
+  const assembleClip = model.animations.find(animation => animation.name === 'Assemble');
+  const driveClip = model.animations.find(animation => animation.name === 'Drivetrain');
+  const sameVector = (a, b) => a.every((value, index) => Math.abs(value - b[index]) < 1e-6);
+  const wheelOffsets = nativeWheelNodes.map(node => {
+    const channel = explodeClip.channels.find(item => item.target.node === node && item.target.path === 'translation');
+    return channel && endpoint(explodeClip, channel, 1);
+  });
+  check(wheelOffsets.every(offset => offset && Math.abs(offset[0]) < 1e-6 && Math.abs(offset[1]) < 1e-6 && Math.abs(Math.abs(offset[2]) - .07) < 1e-6) &&
+    [-1, 1].every(side => wheelOffsets.filter(offset => Math.sign(offset[2]) === side).length === 2),
+    'Exploded view moves the four source wheels evenly toward both sides');
+  const armorNode = nodeIndex('Replaceable armor motion');
+  const armorLift = explodeClip.channels.find(channel => channel.target.node === armorNode && channel.target.path === 'translation');
+  check(armorLift && Math.abs(endpoint(explodeClip, armorLift, 1)[1] - .09) < 1e-6,
+    'Exploded view visibly lifts the replaceable armor shell');
+  const explodeTranslations = new Map(explodeClip.channels.filter(channel => channel.target.path === 'translation')
+    .map(channel => [`${channel.target.node}:${channel.target.path}`, channel]));
+  const assembleTranslations = new Map(assembleClip.channels.filter(channel => channel.target.path === 'translation')
+    .map(channel => [`${channel.target.node}:${channel.target.path}`, channel]));
+  check(explodeTranslations.size === assembleTranslations.size && [...explodeTranslations].every(([key, channel]) => {
+    const reverse = assembleTranslations.get(key);
+    return reverse && sameVector(endpoint(explodeClip, channel, 0), endpoint(assembleClip, reverse, 1)) &&
+      sameVector(endpoint(explodeClip, channel, 1), endpoint(assembleClip, reverse, 0));
+  }), 'Assemble keyframes exactly reverse the exploded transforms');
+  function rotationSamples(animation, name) {
+    const targetNode = nodeIndex(name);
+    const channel = animation.channels.find(item => item.target.node === targetNode && item.target.path === 'rotation');
+    if (!channel) return [];
+    const accessor = model.accessors[animation.samplers[channel.sampler].output];
+    const view = model.bufferViews[accessor.bufferView];
+    const offset = binStart + (view.byteOffset || 0) + (accessor.byteOffset || 0);
+    return Array.from({length:accessor.count}, (_,i) => [0,4,8,12].map(byte => header.getFloat32(offset+i*16+byte,true)));
+  }
+  function turns(samples) {
+    let radians=0;
+    for (let i=1;i<samples.length;i++) {
+      const dot=Math.abs(samples[i].reduce((sum,value,k)=>sum+value*samples[i-1][k],0));
+      radians+=2*Math.acos(Math.min(1,dot));
+    }
+    return radians/(2*Math.PI);
+  }
+  const weaponTurns = turns(rotationSamples(driveClip, 'Weapon shaft axis'));
+  const motorTurns = turns(rotationSamples(driveClip, '2206 motor shaft axis'));
+  check(weaponTurns > 15.5 && weaponTurns < 16.5,
+    'Weapon animation sustains a visibly fast 8 rotations per second');
+  check(motorTurns > 15.5 && motorTurns < 16.5,
+    'Direct-drive motor stays speed-matched with the weapon pulley');
+  check(rearSpins.every(node => Math.abs(turns(rotationSamples(driveClip, node.name)) - 3) < .01),
+    'Both native rear wheels receive continuous 1.5 rotations-per-second drive');
+  await until(() => battlebot?.availableAnimations?.includes('Drivetrain'));
+  await until(() => $('#battlebot-status').textContent.startsWith('Model ready.'));
+  check(['Explode', 'Assemble', 'Drivetrain'].every(name => battlebot.availableAnimations.includes(name)),
+    'BattleBot model loads all three preview animations');
+  const framePrefersReducedMotion = frame.contentWindow.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if (framePrefersReducedMotion) {
+    check(drive.disabled, 'Reduced motion disables the looping drivetrain');
+    explode.click();
+    await until(() => $('#battlebot-status').textContent.startsWith('Exploded view:'));
+    check(explode.getAttribute('aria-pressed') === 'true', 'Reduced motion still reaches the exploded pose');
+    explode.click();
+    await until(() => $('#battlebot-status').textContent === 'Assembly restored.');
+  } else {
+    drive.click();
+    check(drive.getAttribute('aria-pressed') === 'true' && battlebot.animationName === 'Drivetrain',
+      'Run button starts the model drivetrain clip');
+    drive.click();
+    check(drive.getAttribute('aria-pressed') === 'false' && battlebot.currentTime === 0,
+      'Stop button resets the drivetrain animation');
+    explode.click();
+    check(explode.disabled && drive.disabled && $('#battlebot-status').textContent.startsWith('Lifting'),
+      'Exploding disables both controls while the animation runs');
+    await until(() => $('#battlebot-status').textContent.startsWith('Exploded view:'));
+    check(drive.disabled && explode.getAttribute('aria-pressed') === 'true',
+      'Exploded state disables the drivetrain and updates its control');
+    explode.click();
+    check(explode.disabled && drive.disabled && $('#battlebot-status').textContent.startsWith('Reassembling'),
+      'Reassembling disables both controls while the animation runs');
+    await until(() => $('#battlebot-status').textContent === 'Assembly restored.');
+    check($('#battlebot-status').textContent === 'Assembly restored.', 'Assembly completion restores its status');
+  }
+  check(explode.getAttribute('aria-pressed') === 'false' && (framePrefersReducedMotion ? drive.disabled : !drive.disabled),
+    'Reassembling restores both BattleBot controls');
+  $('#model-viewer-loader').dispatchEvent(new Event('error'));
+  check($('#battlebot-status').textContent.startsWith('3D preview unavailable') && explode.disabled && drive.disabled,
+    'A failed model-viewer download leaves a clear source fallback');
   document.title = 'PASS — Portfolio regression checks';
   results.textContent = checks.join('\n');
 } catch (error) {
