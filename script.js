@@ -351,3 +351,110 @@ reduced.addEventListener('change', () => {
   }
   queueHero();
 });
+
+const battlebotViewer = document.querySelector('#battlebot-model');
+const explodeButton = document.querySelector('#battlebot-explode');
+const drivetrainButton = document.querySelector('#drivetrain-button');
+const battlebotStatus = document.querySelector('#battlebot-status');
+let animationsReady = false, assemblyExploded = false, assemblyTransition = false, assemblyTarget = false, assemblyReturnFocus = false, drivetrainRunning = false;
+function updateBattleBotControls() {
+  explodeButton.disabled = !animationsReady || assemblyTransition;
+  drivetrainButton.disabled = !animationsReady || assemblyTransition || assemblyExploded || reduced.matches;
+  drivetrainButton.textContent = drivetrainRunning ? 'Stop drivetrain' : 'Run drivetrain';
+  drivetrainButton.setAttribute('aria-pressed', String(drivetrainRunning));
+}
+function failBattleBotPreview() {
+  animationsReady = false;
+  updateBattleBotControls();
+  battlebotStatus.textContent = '3D preview unavailable. Open the Onshape source to inspect the CAD.';
+}
+function stopDrivetrain() {
+  if (!drivetrainRunning) return;
+  battlebotViewer.pause();
+  battlebotViewer.currentTime = 0;
+  drivetrainRunning = false;
+  updateBattleBotControls();
+}
+function finishAssemblyTransition() {
+  if (!assemblyTransition) return;
+  battlebotViewer.pause();
+  assemblyExploded = assemblyTarget;
+  assemblyTransition = false;
+  const restoreFocus = assemblyReturnFocus && document.activeElement === document.body;
+  assemblyReturnFocus = false;
+  explodeButton.textContent = assemblyExploded ? 'Reassemble assembly' : 'Explode assembly';
+  explodeButton.setAttribute('aria-pressed', String(assemblyExploded));
+  battlebotStatus.textContent = assemblyExploded ? 'Exploded view: replaceable armor and cover lifted, body lowered, wheels out to both sides.' : 'Assembly restored.';
+  updateBattleBotControls();
+  if (restoreFocus) explodeButton.focus();
+}
+function setAssemblyExploded(next) {
+  if (assemblyTransition || next === assemblyExploded) return;
+  const clip = next ? 'Explode' : 'Assemble';
+  if (!battlebotViewer.availableAnimations.includes(clip)) {
+    battlebotStatus.textContent = 'The assembly animation is unavailable. Open the Onshape source to inspect the CAD.';
+    return;
+  }
+  stopDrivetrain();
+  assemblyTarget = next;
+  assemblyReturnFocus = document.activeElement === explodeButton;
+  assemblyTransition = true;
+  updateBattleBotControls();
+  battlebotStatus.textContent = next ? 'Lifting the replaceable armor and separating the cover, body, and wheels…' : 'Reassembling the parts…';
+  battlebotViewer.animationName = clip;
+  battlebotViewer.currentTime = 0;
+  if (reduced.matches) {
+    battlebotViewer.play({ repetitions: 1 });
+    requestAnimationFrame(() => {
+      if (!assemblyTransition) return;
+      battlebotViewer.currentTime = 1;
+      battlebotViewer.pause();
+      finishAssemblyTransition();
+    });
+  } else battlebotViewer.play({ repetitions: 1 });
+}
+function setDrivetrainRunning(running) {
+  if (assemblyTransition || assemblyExploded || running === drivetrainRunning) return;
+  if (running && reduced.matches) {
+    battlebotStatus.textContent = 'Drivetrain motion is paused by your reduced-motion setting.';
+    return;
+  }
+  if (running && !battlebotViewer.availableAnimations.includes('Drivetrain')) {
+    battlebotStatus.textContent = 'The drivetrain animation is unavailable.';
+    return;
+  }
+  if (running) {
+    battlebotViewer.animationName = 'Drivetrain';
+    battlebotViewer.currentTime = 0;
+    battlebotViewer.play();
+    drivetrainRunning = true;
+  } else {
+    battlebotViewer.pause();
+    battlebotViewer.currentTime = 0;
+    drivetrainRunning = false;
+  }
+  updateBattleBotControls();
+  battlebotStatus.textContent = drivetrainRunning ? 'Concept drivetrain running.' : 'Drivetrain stopped.';
+}
+explodeButton.addEventListener('click', () => setAssemblyExploded(!assemblyExploded));
+drivetrainButton.addEventListener('click', () => setDrivetrainRunning(!drivetrainRunning));
+battlebotViewer.addEventListener('load', () => {
+  animationsReady = ['Explode', 'Assemble', 'Drivetrain'].every(name => battlebotViewer.availableAnimations.includes(name));
+  updateBattleBotControls();
+  battlebotStatus.textContent = animationsReady ? 'Model ready. Lift the replaceable armor or run the concept drivetrain.' : 'The model loaded without all preview animations.';
+});
+battlebotViewer.addEventListener('error', failBattleBotPreview);
+document.querySelector('#model-viewer-loader').addEventListener('error', failBattleBotPreview, { once: true });
+battlebotViewer.addEventListener('finished', finishAssemblyTransition);
+if (battlebotViewer.availableAnimations?.length) battlebotViewer.dispatchEvent(new Event('load'));
+reduced.addEventListener('change', () => {
+  if (reduced.matches) {
+    if (assemblyTransition) {
+      battlebotViewer.currentTime = 1;
+      battlebotViewer.pause();
+      finishAssemblyTransition();
+    }
+    stopDrivetrain();
+  }
+  updateBattleBotControls();
+});
