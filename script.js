@@ -367,7 +367,7 @@ const generatorMeter = document.querySelector('.generator-meter');
 const generatorGearPlane = document.querySelector('#generator-gear-plane');
 const generatorLightning = document.querySelector('#generator-lightning');
 const generatorViewButtons = [...generatorStage.querySelectorAll('[data-generator-view]')];
-const generatorCrankCenter = { x: 96, y: 0 };
+const generatorCrankCenter = { x: 88, y: 0 };
 let generatorAngle = 0, generatorSpeed = 0, generatorDragging = false, generatorPointerAngle = 0, generatorPointerTime = 0;
 let generatorFrame = 0, generatorLastFrame = 0, generatorFrontAngle = 0, generatorLastKeyTurn = 0;
 const maxCrankSpeed = 30 * Math.PI * 2;
@@ -409,9 +409,9 @@ function gearPath(teeth, rootRadius, tipRadius) {
   }
   return points.map(([x, y], i) => (i ? 'L' : 'M') + x.toFixed(2) + ' ' + y.toFixed(2)).join(' ') + 'Z';
 }
-// Pitch radii of 24 and 72 meet at the shared 96-unit center distance.
-document.querySelector('.generator-small-gear-path').setAttribute('d', gearPath(14, 22, 26));
-document.querySelector('.generator-large-gear-path').setAttribute('d', gearPath(42, 66, 78));
+// The opposite gear's tooth clears each root at the 88-unit center distance.
+document.querySelector('.generator-small-gear-path').setAttribute('d', gearPath(14, 18, 25));
+document.querySelector('.generator-large-gear-path').setAttribute('d', gearPath(42, 62, 69));
 function updateGeneratorVoltage() {
   // shortcut: scales linearly from the report's single 25 Hz test point, update when a measured speed/output curve is available.
   const frequency = Math.min(30, Math.abs(generatorSpeed) / (Math.PI * 2));
@@ -431,7 +431,7 @@ function renderGenerator() {
   const rotorDegrees = -crankDegrees * 3;
   generatorFrontRotor.setAttribute('transform', 'rotate(' + generatorFrontAngle + ' 280 245)');
   generatorAssemblyRotor.setAttribute('transform', 'rotate(' + rotorDegrees + ')');
-  document.querySelector('#generator-small-gear').setAttribute('transform', 'rotate(' + rotorDegrees + ')');
+  document.querySelector('#generator-small-gear').setAttribute('transform', 'rotate(' + (rotorDegrees + 180 / 14) + ')');
   document.querySelector('#generator-large-gear').setAttribute('transform', 'rotate(' + crankDegrees + ' ' + generatorCrankCenter.x + ' ' + generatorCrankCenter.y + ')');
   generatorCrank.setAttribute('transform', 'rotate(' + crankDegrees + ' ' + generatorCrankCenter.x + ' ' + generatorCrankCenter.y + ')');
 }
