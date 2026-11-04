@@ -150,7 +150,7 @@ try {
     liveStatus.getAttribute('role') === 'status' && liveStatus.getAttribute('aria-live') === 'polite' && liveStatus.getBoundingClientRect().width <= 1,
     'All four project previews use one short shared caption');
   const heroFoot = frame.contentDocument.querySelector('.hero-foot').textContent.trim();
-  check(heroFoot === 'Computer Engineering + Robotics Certificate - Northwestern.' && !heroFoot.includes('Learning by building'),
+  check(heroFoot === 'Computer Engineering + Robotics Certificate @ Northwestern',
     'Hero keeps only the requested education line');
   const heroName = $('#name');
   const techRoot = $('#tech-text-root');
@@ -214,35 +214,68 @@ try {
   techLine.dispatchEvent(new frame.contentWindow.PointerEvent('pointerleave', {pointerType:'mouse'}));
   techCanvasContext.fillText = fillText;
   techCanvasContext.fillRect = fillRect;
-  const smallTech = $('#battlebot-title .tech-heading-mount .tech-text');
-  frame.contentWindow.scrollTo(0, smallTech.getBoundingClientRect().top + frame.contentWindow.scrollY - 80);
-  const smallCanvas = smallTech.querySelector('canvas');
-  const smallContext = smallCanvas.getContext('2d');
-  const smallLabels = [];
-  let smallParticles = 0;
-  const smallFillText = smallContext.fillText;
-  const smallFillRect = smallContext.fillRect;
-  smallContext.fillText = function(text, x, y, ...args) {
-    smallLabels.push({text:String(text), x, y, align:this.textAlign, width:this.measureText(String(text)).width});
-    return smallFillText.call(this, text, x, y, ...args);
-  };
-  smallContext.fillRect = function(...args) { smallParticles++; return smallFillRect.apply(this, args); };
-  await new Promise(resolve => setTimeout(resolve, 300));
-  check(smallLabels.length === 0, 'Small headings stay still until hovered');
-  const smallBounds = smallTech.getBoundingClientRect();
-  smallTech.dispatchEvent(new frame.contentWindow.PointerEvent('pointermove', {
-    clientX: smallBounds.left + smallBounds.width * 0.1, clientY: smallBounds.top + smallBounds.height / 2, pointerType:'mouse'
-  }));
-  await until(() => smallLabels.some(label => /\d+ × \d+/.test(label.text)) && smallParticles > 0);
-  const pixelLabel = smallLabels.find(label => /\d+ × \d+/.test(label.text));
-  const labelLeft = pixelLabel.align === 'right' ? pixelLabel.x - pixelLabel.width : pixelLabel.x;
-  check(labelLeft >= -1 && labelLeft + pixelLabel.width <= smallCanvas.clientWidth + 1 &&
-    pixelLabel.y >= 0 && pixelLabel.y <= smallCanvas.clientHeight,
-    'Hovered pixel dimensions stay inside the heading canvas');
-  check(smallParticles > 0, 'Small headings keep the pixel particles on hover');
-  smallTech.dispatchEvent(new frame.contentWindow.PointerEvent('pointerleave', {pointerType:'mouse'}));
-  smallContext.fillText = smallFillText;
-  smallContext.fillRect = smallFillRect;
+  const smallTitles = [
+    '#battlebot-title .tech-heading-mount .tech-text',
+    '#generator-title .tech-heading-mount .tech-text',
+    '#scanner-title .tech-heading-mount .tech-text'
+  ].map(selector => $(selector));
+  let clearHoverReadout = true;
+  let titlePixels = true;
+  let smallTitlesStayStill = true;
+  for (const [index, smallTech] of smallTitles.entries()) {
+    smallTech.scrollIntoView({block:'center'});
+    const smallCanvas = smallTech.querySelector('canvas');
+    const smallContext = smallCanvas.getContext('2d');
+    const smallLabels = [];
+    const smallClearRects = [];
+    let smallParticles = 0;
+    const smallFillText = smallContext.fillText;
+    const smallFillRect = smallContext.fillRect;
+    const smallClearRect = smallContext.clearRect;
+    smallContext.fillText = function(text, x, y, ...args) {
+      const metrics = this.measureText(String(text));
+      smallLabels.push({text:String(text), x, y, align:this.textAlign, width:metrics.width,
+        ascent:metrics.actualBoundingBoxAscent, descent:metrics.actualBoundingBoxDescent,
+        letterSpacing:this.letterSpacing, wordSpacing:this.wordSpacing, clearsBefore:smallClearRects.length});
+      return smallFillText.call(this, text, x, y, ...args);
+    };
+    smallContext.fillRect = function(...args) { smallParticles++; return smallFillRect.apply(this, args); };
+    smallContext.clearRect = function(...args) { smallClearRects.push(args); return smallClearRect.apply(this, args); };
+    await new Promise(resolve => setTimeout(resolve, 300));
+    if (index === 0) smallTitlesStayStill = smallLabels.length === 0;
+    const smallBounds = smallTech.getBoundingClientRect();
+    smallTech.dispatchEvent(new frame.contentWindow.PointerEvent('pointermove', {
+      clientX: smallBounds.left + Math.min(16, smallBounds.width * .1),
+      clientY: smallBounds.top + smallBounds.height / 2, pointerType:'mouse'
+    }));
+    await until(() => smallLabels.some(label => /\d+ × \d+/.test(label.text)) && smallParticles > 0);
+    const pixelLabel = smallLabels.find(label => /\d+ × \d+/.test(label.text));
+    const labelLeft = pixelLabel.align === 'center' ? pixelLabel.x - pixelLabel.width / 2
+      : pixelLabel.align === 'right' ? pixelLabel.x - pixelLabel.width : pixelLabel.x;
+    const labelTop = pixelLabel.y - pixelLabel.ascent;
+    const labelBottom = pixelLabel.y;
+    const labelCleared = smallClearRects.slice(0, pixelLabel.clearsBefore).some(([x, y, width, height]) =>
+      width < smallCanvas.width && height < 24 && x <= labelLeft && x + width >= labelLeft + pixelLabel.width &&
+      y <= labelTop && y + height >= labelBottom);
+    const mountStyle = getComputedStyle(smallTech.closest('.tech-heading-mount'));
+    const probe = frame.contentDocument.createElement('canvas').getContext('2d');
+    probe.font = `${mountStyle.fontWeight} ${mountStyle.fontSize} ${mountStyle.fontFamily}`;
+    probe.letterSpacing = mountStyle.letterSpacing;
+    const ink = probe.measureText(smallTech.closest('.tech-heading-mount').dataset.techText);
+    const inkTop = (smallCanvas.clientHeight - ink.actualBoundingBoxAscent - ink.actualBoundingBoxDescent) / 2;
+    clearHoverReadout = clearHoverReadout && pixelLabel.align === 'center' &&
+      labelLeft >= 0 && labelLeft + pixelLabel.width <= smallCanvas.clientWidth &&
+      pixelLabel.y >= 10 && pixelLabel.y <= inkTop - 7 && pixelLabel.letterSpacing === '0px' &&
+      pixelLabel.wordSpacing === '0px' && pixelLabel.width >= pixelLabel.text.length * 4 && labelCleared;
+    titlePixels = titlePixels && smallParticles > 0;
+    smallTech.dispatchEvent(new frame.contentWindow.PointerEvent('pointerleave', {pointerType:'mouse'}));
+    smallContext.fillText = smallFillText;
+    smallContext.fillRect = smallFillRect;
+    smallContext.clearRect = smallClearRect;
+  }
+  check(smallTitlesStayStill, 'Small headings stay still until hovered');
+  check(clearHoverReadout, 'BattleBot, generator and scanner pixel dimensions sit above each word');
+  check(titlePixels, 'All three project headings keep the pixel particles on hover');
   const projects = [...frame.contentDocument.querySelectorAll('.project')];
   const desktopProjects = frame.contentWindow.innerWidth > 600;
   check(projects.every((project, index) => {
@@ -311,22 +344,32 @@ try {
     $('#generator-frequency') && !$('#generator-peak-voltage'),
     'Generator meter contains voltage, crank frequency and a simple AC graph');
   const isoMatrix = $('#generator-isometric').transform.baseVal.consolidate().matrix;
-  check($('#generator-rotor-shaft').getAttribute('d') === 'M220 260 330 330' && $('#generator-shaft-collar') &&
+  check($('#generator-rotor-shaft').getAttribute('d') === 'M220 260 352 344' && $('#generator-shaft-collar') && $('#generator-drive-shaft') &&
     $('#generator-stator-face').getAttribute('transform') === 'translate(220 260)' &&
-    $('#generator-gear-plane').getAttribute('transform') === 'translate(330 330)' &&
+    $('#generator-gear-plane').getAttribute('transform') === 'translate(352 344)' &&
     $('#generator-isometric').contains($('#generator-stator-face')) && $('#generator-isometric').contains($('#generator-gear-plane')) &&
     Math.abs(isoMatrix.a - .88) < .002 && Math.abs(isoMatrix.b) < .002 &&
     Math.abs(isoMatrix.c) < .002 && Math.abs(isoMatrix.d - 1) < .002 && Math.abs(isoMatrix.e - 26) < .002 &&
-    $('#generator-large-gear .generator-large-gear-path').getAttribute('transform') === 'translate(96 0)' &&
-    $('#generator-large-gear circle').getAttribute('cx') === '96' && $('#generator-large-gear circle').getAttribute('cy') === '0',
-    'Generator and gears share an upright projection, coaxial shaft, and level 3:1 gear centers');
+    $('#generator-large-gear .generator-large-gear-path').getAttribute('transform') === 'translate(88 0)' &&
+    $('#generator-large-gear circle').getAttribute('cx') === '88' && $('#generator-large-gear circle').getAttribute('cy') === '0' &&
+    Boolean($('#generator-drive-shaft').compareDocumentPosition($('#generator-stator-face')) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+    $('#generator-crank-hub').getAttribute('transform') === 'translate(88 0)',
+    'Generator shaft tucks behind its face, exits at the pinion, and meshes with the mounted crank gear');
+  check(new Set([...frame.contentDocument.querySelectorAll('[id]')].map(node => node.id)).size === frame.contentDocument.querySelectorAll('[id]').length,
+    'Generator drivetrain elements have unique IDs');
   check($('#generator-rear-face').getAttribute('cx') === '165' && $('#generator-rear-face').getAttribute('cy') === '225',
     'Short cylinder depth follows the same axis as the rotor shaft');
   const largeGear = $('#generator-large-gear .generator-gear');
   const smallGear = $('#generator-small-gear .generator-gear');
+  const radii = path => [...path.getAttribute('d').matchAll(/[ML]([-\d.]+) ([-\d.]+)/g)]
+    .map(([, x, y]) => Math.hypot(Number(x), Number(y)));
+  const smallGearRadii = radii(smallGear);
+  const largeGearRadii = radii(largeGear);
   check((largeGear.getAttribute('d').match(/L/g) || []).length + 1 === 252 &&
-    (smallGear.getAttribute('d').match(/L/g) || []).length + 1 === 84,
-    'Generator gears use the documented 3:1 tooth-count ratio');
+    (smallGear.getAttribute('d').match(/L/g) || []).length + 1 === 84 &&
+    Math.max(...smallGearRadii) + Math.min(...largeGearRadii) < 88 &&
+    Math.max(...largeGearRadii) + Math.min(...smallGearRadii) < 88,
+    'Generator gears keep a 3:1 tooth ratio with clearance for both pinion and large-gear teeth');
   $('[data-generator-view="assembly"]').click();
   check(generatorStage.dataset.view === 'assembly' && $('#generator-rotor-view').getAttribute('aria-hidden') === 'true' &&
     $('#generator-assembly-view').getAttribute('aria-hidden') === 'false' && $('#generator-crank').getAttribute('tabindex') === '0' && !$('.generator-meter').hidden,
@@ -376,7 +419,7 @@ try {
   const voltageIntervals = voltageUpdates.slice(1).map((time, index) => time - voltageUpdates[index]);
   const gearAngle = Number($('#generator-large-gear').getAttribute('transform').match(/rotate\(([-\d.]+)/)[1]);
   const rotorAngle = Number($('#generator-small-gear').getAttribute('transform').match(/rotate\(([-\d.]+)/)[1]);
-  check(Number.parseFloat(voltage.textContent) > 0 && Math.abs(rotorAngle + 3 * gearAngle) < .01,
+  check(Number.parseFloat(voltage.textContent) > 0 && Math.abs(rotorAngle + 3 * gearAngle - 180 / 14) < .01,
     'Turning the crank spins the rotor at 3× speed and produces a voltage estimate');
   check($('#generator-voltage-line').getAttribute('d') !== initialVoltageGraph,
     'Voltage graph follows the generated reading');
@@ -394,9 +437,9 @@ try {
     'Enter accelerates the generator without needing handle rotation');
   const gearMatrix = $('#generator-gear-plane').getScreenCTM();
   const localPoint = (x, y) => new frame.contentWindow.DOMPoint(x, y).matrixTransform(gearMatrix);
-  const dragStart = localPoint(134, -80);
-  const dragRadius = Math.hypot(134 - 96, -80);
-  const dragEnd = localPoint(96 + dragRadius * Math.cos(-Math.PI / 2), dragRadius * Math.sin(-Math.PI / 2));
+  const dragStart = localPoint(122, -82);
+  const dragRadius = Math.hypot(122 - 88, -82);
+  const dragEnd = localPoint(88 + dragRadius * Math.cos(-Math.PI / 2), dragRadius * Math.sin(-Math.PI / 2));
   const crankHit = $('#generator-crank-hit');
   const beforeDrag = $('#generator-large-gear').getAttribute('transform');
   crankHit.dispatchEvent(new frame.contentWindow.PointerEvent('pointerdown', {clientX:dragStart.x, clientY:dragStart.y, button:0, pointerId:7, bubbles:true}));
@@ -609,6 +652,36 @@ try {
   $('#model-viewer-loader').dispatchEvent(new Event('error'));
   check($('#battlebot-status').textContent.startsWith('3D preview unavailable') && explode.disabled && drive.disabled,
     'A failed model-viewer download leaves a clear source fallback');
+  const previousFrameWidth = frame.style.width;
+  const canvasPrototype = frame.contentWindow.CanvasRenderingContext2D.prototype;
+  const originalCanvasFillText = canvasPrototype.fillText;
+  const renderedHeroFonts = [];
+  canvasPrototype.fillText = function(text, ...args) {
+    if (this.font.includes('Anton')) renderedHeroFonts.push(this.font);
+    return originalCanvasFillText.call(this, text, ...args);
+  };
+  const hasRenderedHeroFont = size => renderedHeroFonts.some(font => {
+    const renderedSize = Number(font.match(/([\d.]+)px\s+Anton/)?.[1]);
+    return Number.isFinite(renderedSize) && Math.abs(renderedSize - size) < .5;
+  });
+  const expectedHeroFonts = () => heroTextHosts.map(host => Number.parseFloat(frame.contentWindow.getComputedStyle(host).fontSize));
+  const hasRenderedHeroFonts = () => expectedHeroFonts().every(hasRenderedHeroFont);
+  let restoredDesktopFonts = [];
+  try {
+    frame.contentWindow.scrollTo(0, 0);
+    frame.style.width = '1500px';
+    await until(() => frame.contentWindow.innerWidth === 1500 && hasRenderedHeroFonts());
+    frame.style.width = '390px';
+    await until(() => frame.contentWindow.innerWidth === 390 && hasRenderedHeroFonts());
+    frame.style.width = '1440px';
+    await until(() => frame.contentWindow.innerWidth === 1440 && hasRenderedHeroFonts());
+    restoredDesktopFonts = expectedHeroFonts();
+  } finally {
+    canvasPrototype.fillText = originalCanvasFillText;
+    frame.style.width = previousFrameWidth;
+  }
+  check(restoredDesktopFonts.length === heroTextHosts.length && restoredDesktopFonts.every(hasRenderedHeroFont),
+    'Hero text keeps its original CSS size when resizing desktop → mobile → desktop without reload');
   document.title = 'PASS — Portfolio regression checks';
   results.textContent = checks.join('\n');
 } catch (error) {

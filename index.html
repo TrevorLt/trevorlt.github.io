@@ -15,11 +15,11 @@
   <link rel="preload" href="assets/anton.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans-semibold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261103-portfolio-v21">
+  <link rel="stylesheet" href="styles.css?v=20261103-portfolio-v23">
   <link rel="stylesheet" href="assets/tech-text.bundle.css?v=20261103-reactbits-v2">
   <script id="model-viewer-loader" type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.4.0/model-viewer.min.js"></script>
-  <script src="script.js?v=20261103-portfolio-v14" defer></script>
-  <script src="assets/tech-text.bundle.js?v=20261103-reactbits-v3" defer></script>
+  <script src="script.js?v=20261103-portfolio-v15" defer></script>
+  <script src="assets/tech-text.bundle.js?v=20261104-reactbits-v9" defer></script>
   <noscript><style>.scanner-stage canvas,.scanner-stage .scan-controls,.codex-demo .demo-styles,.codex-demo .demo-scenarios{display:none}.scanner-stage .scan-fallback{display:block}</style></noscript>
 </head>
 <body>
@@ -32,7 +32,7 @@
   <section class="hero" id="home" aria-labelledby="name">
     <div class="hero-title"><h1 id="name" class="visually-hidden" translate="no">Trevor Lin</h1><div id="tech-text-root" class="hero-tech-wordmark" aria-hidden="true"><span class="tech-heading-mount hero-tech-mount" data-tech-text="TREVOR">TREVOR</span><span class="tech-heading-mount hero-tech-mount" data-tech-text="LIN">LIN</span></div></div>
     <div class="hero-copy"><p>Exploring mechatronics &amp; robotics.<br>Learning by making things work.</p><a class="button" href="#work">Explore my work <span aria-hidden="true">↗</span></a></div>
-    <div class="hero-foot"><span>Computer Engineering + Robotics Certificate - Northwestern.</span></div>
+    <div class="hero-foot"><span>Computer Engineering + Robotics Certificate @ Northwestern</span></div>
   </section>
 
   <section class="work section" id="work" tabindex="-1" aria-labelledby="work-title">
@@ -127,6 +127,13 @@
               <circle id="generator-rear-face" cx="165" cy="225" r="130" fill="#687167" stroke="#d8ddd0" stroke-width="6"/>
               <path id="generator-cylinder-wall" d="M234.8 115.3 289.8 150.3A130 130 0 0 1 150.2 369.7L95.2 334.7A130 130 0 0 1 234.8 115.3Z" fill="url(#generator-shell)" stroke="#a1a99b" stroke-width="3"/>
               <path d="M54 158 109 193M39 229 94 264M75 302 130 337" stroke="#8b9786" stroke-opacity=".32" stroke-width="2"/>
+              <g id="generator-drive-shaft" class="generator-drive-train" aria-hidden="true">
+                <path d="M220 260 352 344" fill="none" stroke="#596257" stroke-width="19" stroke-linecap="round"/>
+                <path id="generator-rotor-shaft" d="M220 260 352 344" fill="none" stroke="#c6c9b9" stroke-width="11" stroke-linecap="round"/>
+                <path d="M220 260 352 344" fill="none" stroke="#f0f0e1" stroke-opacity=".8" stroke-width="2.5" stroke-linecap="round"/>
+                <circle cx="331" cy="331" r="12" fill="#353d35" stroke="#c6c9b9" stroke-width="4"/>
+                <circle cx="331" cy="331" r="4" fill="#e4e5d7"/>
+              </g>
               <g id="generator-stator-face" transform="translate(220 260)">
                 <circle r="130" fill="#1a231c" stroke="#e3e2d5" stroke-width="9"/>
                 <circle r="122" fill="none" stroke="#65705f" stroke-width="5"/>
@@ -142,15 +149,14 @@
                 <g id="generator-assembly-bearing" aria-label="Rotor shaft bearing"><circle r="26" fill="url(#generator-bearing-metal)" stroke="#f5f4ea" stroke-width="4"/><circle r="17" fill="#303831" stroke="#737a70" stroke-width="3"/><circle r="9" fill="#111512"/></g>
               </g>
               <g id="generator-drive-train" class="generator-drive-train">
-                <path id="generator-rotor-shaft" d="M220 260 330 330" stroke="#c6c9b9" stroke-width="13"/><path d="M220 260 330 330" stroke="#8c9788" stroke-width="4"/>
-                <g id="generator-gear-plane" transform="translate(330 330)">
-                  <g id="generator-shaft-collar" transform="translate(-13 -8)"><circle r="17" fill="url(#generator-bearing-metal)" stroke="#f5f4ea" stroke-width="3"/></g>
+                <g id="generator-gear-plane" transform="translate(352 344)">
+                  <g id="generator-shaft-collar"><circle r="15" fill="url(#generator-bearing-metal)" stroke="#f5f4ea" stroke-width="3"/><circle r="8" fill="#303831" stroke="#bfc6b5" stroke-width="2"/></g>
                   <g id="generator-small-gear"><path class="generator-gear generator-small-gear-path" fill="#d5682c" stroke="#ffbf78" stroke-width="3"/><circle r="10" fill="#313a32" stroke="#f0c18b" stroke-width="4"/></g>
-                  <g id="generator-large-gear"><path class="generator-gear generator-large-gear-path" transform="translate(96 0)" fill="#89a86b" stroke="#dafa9c" stroke-width="4"/><circle cx="96" cy="0" r="40" fill="#374236" stroke="#dafa9c" stroke-width="4"/><circle cx="96" cy="0" r="15" fill="#20271f" stroke="#c6d99c" stroke-width="4"/></g>
+                  <g id="generator-large-gear"><path class="generator-gear generator-large-gear-path" transform="translate(88 0)" fill="#89a86b" stroke="#dafa9c" stroke-width="4"/><circle cx="88" cy="0" r="40" fill="#374236" stroke="#dafa9c" stroke-width="4"/><g id="generator-crank-hub" transform="translate(88 0)"><circle r="19" fill="#263027" stroke="#a9b98f" stroke-width="4"/><circle r="8" fill="#171c18" stroke="#e3e5d6" stroke-width="3"/></g></g>
                   <g id="generator-crank" role="button" tabindex="0" aria-label="Crank handle. Drag in a circle to turn, or press Enter to accelerate.">
-                    <path d="M96 0V-80H130" fill="none" stroke="#a8b09e" stroke-width="12" stroke-linecap="round" stroke-linejoin="round"/><path d="M96 0V-80H130" fill="none" stroke="#eff0df" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-                    <rect x="114" y="-97" width="40" height="34" rx="12" fill="url(#generator-copper)" stroke="#542c1c" stroke-width="3"/><path d="M122-90v20M132-90v20M142-90v20" stroke="#ffd29a" stroke-width="2"/>
-                    <path id="generator-crank-hit" d="M108-104h54v48H108z" fill="transparent" pointer-events="all" aria-hidden="true"/>
+                    <path d="M88 0V-82H122" fill="none" stroke="#263027" stroke-width="14" stroke-linecap="round" stroke-linejoin="round"/><path d="M88 0V-82H122" fill="none" stroke="#eff0df" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <rect x="106" y="-99" width="40" height="34" rx="12" fill="url(#generator-copper)" stroke="#542c1c" stroke-width="3"/><path d="M114-92v20M124-92v20M134-92v20" stroke="#ffd29a" stroke-width="2"/>
+                    <path id="generator-crank-hit" d="M100-106h54v48H100z" fill="transparent" pointer-events="all" aria-hidden="true"/>
                   </g>
                 </g>
               </g>

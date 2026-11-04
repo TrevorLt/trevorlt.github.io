@@ -222,16 +222,9 @@ const TechText = ({
       }
 
       const probe = scratchCtx;
-      setFont(probe, s, s.fontSize);
-      let m = probe.measureText(s.text);
-      const fit = Math.min(
-        1,
-        (width * 0.9) / Math.max(m.actualBoundingBoxLeft + m.actualBoundingBoxRight, 1),
-        (height * 0.66) / Math.max(m.actualBoundingBoxAscent + m.actualBoundingBoxDescent, 1)
-      );
-      const size = s.fontSize * fit;
+      const size = s.fontSize;
       setFont(probe, s, size);
-      m = probe.measureText(s.text);
+      const m = probe.measureText(s.text);
       const inkWidth = m.actualBoundingBoxLeft + m.actualBoundingBoxRight;
       const inkHeight = m.actualBoundingBoxAscent + m.actualBoundingBoxDescent;
       const margin = width * 0.05;
@@ -496,17 +489,30 @@ const TechText = ({
 
       if (!s.labels) return;
       ctx.font = LABEL_FONT;
-      ctx.textAlign = 'left';
+      ctx.letterSpacing = '0px';
+      ctx.wordSpacing = '0px';
+      ctx.textAlign = 'center';
       ctx.textBaseline = 'bottom';
       ctx.fillStyle = accent;
-      ctx.globalAlpha = 0.62 * a;
       const label =
         moved > 1
           ? `${signed(Math.round(glyph.offset.x))}, ${signed(Math.round(-glyph.offset.y))}`
           : `${glyph.char}  ${Math.round(glyph.box.x2 - glyph.box.x1)} × ${Math.round(glyph.box.y2 - glyph.box.y1)}`;
-      const labelWidth = ctx.measureText(label).width;
-      const labelX = Math.max(2, Math.min(width - labelWidth - 2, Math.round(frame.x1)));
-      ctx.fillText(label, labelX, Math.max(10, Math.round(frame.y1) - 7));
+      const metrics = ctx.measureText(label);
+      const labelWidth = metrics.width;
+      const glyphCenter = (glyph.box.x1 + glyph.box.x2) / 2 + glyph.offset.x;
+      const labelX = Math.max(labelWidth / 2 + 2, Math.min(width - labelWidth / 2 - 2, glyphCenter));
+      const labelY = Math.max(10, Math.round(word.top) - 9);
+      const clearLeft = Math.max(0, labelX - labelWidth / 2 - 2);
+      const clearTop = Math.max(0, labelY - metrics.actualBoundingBoxAscent - 2);
+      ctx.clearRect(
+        clearLeft,
+        clearTop,
+        Math.min(width, labelX + labelWidth / 2 + 2) - clearLeft,
+        Math.min(height, labelY + 2) - clearTop
+      );
+      ctx.globalAlpha = a;
+      ctx.fillText(label, labelX, labelY);
       ctx.globalAlpha = 1;
     };
 
@@ -520,6 +526,8 @@ const TechText = ({
       ctx.fillStyle = accent;
       ctx.lineWidth = 1;
       ctx.font = LABEL_FONT;
+      ctx.letterSpacing = '0px';
+      ctx.wordSpacing = '0px';
       ctx.textBaseline = 'middle';
       ctx.textAlign = room ? 'left' : 'right';
       view.lines.forEach((line, k) => {
@@ -879,6 +887,10 @@ const TechText = ({
     wakeRef.current = wake;
 
     const resize = () => {
+      const nextFontSize = Number.parseFloat(getComputedStyle(container).fontSize);
+      if (Number.isFinite(nextFontSize) && nextFontSize > 0 && settingsRef.current) {
+        settingsRef.current.fontSize = nextFontSize;
+      }
       width = Math.max(1, container.clientWidth);
       height = Math.max(1, container.clientHeight);
       dpr = Math.min(window.devicePixelRatio || 1, 2);
@@ -952,6 +964,7 @@ const TechText = ({
 
     const resizeObserver = new ResizeObserver(resize);
     resizeObserver.observe(container);
+    window.addEventListener('resize', resize);
     const intersectionObserver = new IntersectionObserver(([entry]) => {
       visible = entry.isIntersecting;
       wake();
@@ -972,6 +985,7 @@ const TechText = ({
       cancelAnimationFrame(raf);
       wakeRef.current = () => {};
       resizeObserver.disconnect();
+      window.removeEventListener('resize', resize);
       intersectionObserver.disconnect();
       themeObserver.disconnect();
       schemeQuery?.removeEventListener?.('change', wake);

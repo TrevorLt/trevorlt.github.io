@@ -103,7 +103,7 @@ summary:focus-visible{outline-offset:-3px}
 .generator-front-rotor-transition{transform-box:view-box;transform-origin:280px 245px}
 #generator-stage[data-view=assembly] .generator-front-rotor-transition{animation:generator-rotor-collapse .86s cubic-bezier(.22,1,.36,1) both}
 @keyframes generator-rotor-collapse{0%{transform:scale(1) rotate(0deg);opacity:1}58%{transform:scale(.72) rotate(270deg);opacity:1}100%{transform:scale(.38) rotate(360deg);opacity:0}}
-.generator-drive-train{opacity:0;transform:translateX(18px) scale(.96);transform-origin:330px 330px;pointer-events:none;transition:opacity .48s cubic-bezier(.22,1,.36,1),transform .62s cubic-bezier(.22,1,.36,1)}
+.generator-drive-train{opacity:0;transform:translateX(18px) scale(.96);transform-origin:352px 344px;pointer-events:none;transition:opacity .48s cubic-bezier(.22,1,.36,1),transform .62s cubic-bezier(.22,1,.36,1)}
 #generator-stage[data-view=assembly] .generator-drive-train{opacity:1;transform:none;pointer-events:auto;transition-delay:.58s}
 .generator-cloud{stroke:#bed5df;stroke-width:32;filter:blur(18px);opacity:.04}
 .generator-lightning-bolt,.generator-lightning-glow{opacity:0;stroke-dasharray:1;stroke-dashoffset:0}
@@ -143,7 +143,7 @@ summary:focus-visible{outline-offset:-3px}
 .hero-tech-wordmark .tech-text{flex:1 1 auto;min-height:0}
 .hero-tech-wordmark .tech-text-canvas{min-height:0;height:100%}
 .tech-heading-mount .tech-text{width:100%;height:100%;min-width:0;overflow:visible}
-.tech-text-canvas{aspect-ratio:auto}
+.tech-text-canvas{aspect-ratio:auto;letter-spacing:normal;word-spacing:normal}
 @media(min-width:1800px){.hero-title{--hero-name-size:300px}}
 @media(max-width:900px){.hero-title{--hero-name-size:22vw}}
 @media(max-width:600px){.hero-title{--hero-name-size:29vw}.section-intro{gap:32px}}
