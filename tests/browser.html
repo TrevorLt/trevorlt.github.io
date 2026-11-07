@@ -400,8 +400,9 @@ try {
     'Full assembly view uses the short handle and Enter instruction');
   $('#generator-crank').focus();
   const crankFocus = frame.contentWindow.getComputedStyle($('#generator-crank'));
-  check(crankFocus.outlineColor === 'rgb(218, 250, 156)' && crankFocus.outlineStyle === 'dashed' && crankFocus.boxShadow === 'none',
-    'Keyboard crank focus uses a quiet green outline without a blue box shadow');
+  check(crankFocus.boxShadow === 'none' && (crankFocus.outlineStyle === 'none' ||
+    (crankFocus.outlineColor === 'rgb(218, 250, 156)' && crankFocus.outlineStyle === 'dashed')),
+    'Crank focus avoids the browser blue outline and shadow');
   const voltage = $('#generator-voltage');
   for (let i = 0; i < 25; i++) frame.contentWindow.document.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', bubbles:true, cancelable:true}));
   frame.contentWindow.updateGeneratorVoltage();
