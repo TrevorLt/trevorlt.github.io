@@ -15,10 +15,10 @@
   <link rel="preload" href="assets/anton.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans-semibold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261103-portfolio-v23">
+  <link rel="stylesheet" href="styles.css?v=20261105-project-evidence">
   <link rel="stylesheet" href="assets/tech-text.bundle.css?v=20261103-reactbits-v2">
   <script id="model-viewer-loader" type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.4.0/model-viewer.min.js"></script>
-  <script src="script.js?v=20261103-portfolio-v15" defer></script>
+  <script src="script.js?v=20261107-generator-idle-v1" defer></script>
   <script src="assets/tech-text.bundle.js?v=20261104-reactbits-v9" defer></script>
   <noscript><style>.scanner-stage canvas,.scanner-stage .scan-controls,.codex-demo .demo-styles,.codex-demo .demo-scenarios{display:none}.scanner-stage .scan-fallback{display:block}</style></noscript>
 </head>
@@ -31,18 +31,18 @@
 <main>
   <section class="hero" id="home" aria-labelledby="name">
     <div class="hero-title"><h1 id="name" class="visually-hidden" translate="no">Trevor Lin</h1><div id="tech-text-root" class="hero-tech-wordmark" aria-hidden="true"><span class="tech-heading-mount hero-tech-mount" data-tech-text="TREVOR">TREVOR</span><span class="tech-heading-mount hero-tech-mount" data-tech-text="LIN">LIN</span></div></div>
-    <div class="hero-copy"><p>Exploring mechatronics &amp; robotics.<br>Learning by making things work.</p><a class="button" href="#work">Explore my work <span aria-hidden="true">↗</span></a></div>
+    <div class="hero-copy"><p>I build mechanisms and sensing systems, from a combat robot with swappable armor to a prototype 3D scanner.</p><a class="button" href="#battlebot">See the BattleBot design <span aria-hidden="true">↗</span></a></div>
     <div class="hero-foot"><span>Computer Engineering + Robotics Certificate @ Northwestern</span></div>
   </section>
 
   <section class="work section" id="work" tabindex="-1" aria-labelledby="work-title">
-    <div class="section-intro"><h2 id="work-title"><span class="visually-hidden">Selected work</span><span class="tech-heading-mount" data-tech-text="Selected work" aria-hidden="true">Selected work</span></h2><p>Exploring how machines sense the world.<br>Making software that’s clearer to use.</p></div>
-    <div class="project-index" aria-label="Project index"><a href="#battlebot">BattleBot <span>Mechanical</span></a><a href="#ac-generator">3-Phase AC Generator <span>Electrical</span></a><a href="#cryptscan">CryptScan <span>Hardware</span></a><a href="#codex">Codex Usage Status <span>Software</span></a></div>
+    <div class="section-intro"><h2 id="work-title"><span class="visually-hidden">Selected work</span><span class="tech-heading-mount" data-tech-text="Selected work" aria-hidden="true">Selected work</span></h2><p>Mechanical design, electronics, and software. See what each project does and how far it’s come.</p></div>
+    <div class="project-index" aria-label="Project index"><a href="#battlebot">BattleBot <span>Combat robot with swappable armor</span></a><a href="#ac-generator">3-Phase AC Generator <span>Hand-cranked generator with measured output</span></a><a href="#cryptscan">CryptScan <span>Distance sensing for 3D scanning</span></a><a href="#codex">Codex Usage Status <span>Codex usage limits in the macOS menu bar</span></a></div>
 
     <article class="project battlebot-project" id="battlebot" aria-labelledby="battlebot-title">
       <div class="project-copy">
         <h3 id="battlebot-title" translate="no"><span class="visually-hidden">BattleBot</span><span class="tech-heading-mount" data-tech-text="BattleBot" aria-hidden="true">BattleBot</span></h3>
-        <p class="project-subtitle">Antweight · vertical spinner</p>
+        <p class="project-subtitle">Combat robot with swappable armor</p>
         <p>An Antweight vertical spinner with replaceable 3D-printed ABS armor, designed for quick swaps between matches or after damage. A 2206 brushless motor (22 mm diameter × 6 mm stator) drives the weapon; two brushed motors drive the rear wheels.</p>
         <dl class="project-facts"><div><dt>Class</dt><dd>Antweight</dd></div><div><dt>Weapon</dt><dd>Vertical spinner</dd></div><div><dt>Armor</dt><dd>Replaceable ABS</dd></div><div><dt>Platform</dt><dd>Onshape</dd></div></dl>
         <a class="project-link" href="https://cad.onshape.com/documents/bdc75ecbf621cda3da9ebd5b/w/fc0be3140bfd8cab092efe52/e/fe9df441b8d8cb29e966e12a" target="_blank" rel="noopener noreferrer">Open full CAD in Onshape <span aria-hidden="true">↗</span></a>
@@ -55,16 +55,16 @@
           <button class="battlebot-action" id="drivetrain-button" type="button" aria-pressed="false" disabled>Run drivetrain</button>
           <span id="battlebot-status" role="status" aria-live="polite">Loading assembly…</span>
         </div>
-        <p class="project-caption">Interactive preview, animated for clarity.</p>
+        <p class="project-caption">CAD preview of armor removal and drivetrain motion.</p>
       </div>
     </article>
 
     <article class="project generator-project" id="ac-generator" aria-labelledby="generator-title">
       <div class="project-copy">
         <h3 id="generator-title" translate="no"><span class="visually-hidden">3-Phase AC Generator</span><span class="tech-heading-mount" data-tech-text="3-Phase AC Generator" aria-hidden="true">3-Phase AC Generator</span></h3>
-        <p class="project-subtitle">A hand-cranked electromagnetic build.</p>
-        <p>Our team designed and assembled this generator from custom 3D-printed and laser-cut parts. Eight N52 magnets (10 × 5 × 40 mm) spin past eight stationary copper coils, each wound with 60 turns of 0.6 mm wire. A 3:1 gear pair drives the rotor from the hand crank. The report records 2.72 V peak at 25 Hz, 0.49 A peak, and 1.33 W peak, with 5.6 Ω internal resistance.</p>
-        <dl class="project-facts"><div><dt>Output</dt><dd>Three-phase AC</dd></div><div><dt>Rotor</dt><dd>8 N52 magnets</dd></div><div><dt>Stator</dt><dd>8 × 60-turn coils</dd></div><div><dt>Drive</dt><dd>3:1 hand crank</dd></div></dl>
+        <p class="project-subtitle">Hand-cranked generator · 2.72 V peak at 25 Hz</p>
+        <p>Our team designed and assembled this generator from custom 3D-printed and laser-cut parts. Eight N52 magnets (10 × 5 × 40 mm) spin past eight stationary copper coils, each wound with 60 turns of 0.6 mm wire. A 3:1 gear pair drives the rotor from the hand crank.</p>
+        <dl class="project-facts"><div><dt>Test report</dt><dd>0.49 A peak, 1.33 W peak, 5.6 Ω internal resistance</dd></div><div><dt>Rotor</dt><dd>8 N52 magnets</dd></div><div><dt>Stator</dt><dd>8 × 60-turn coils</dd></div><div><dt>Drive</dt><dd>3:1 hand crank</dd></div></dl>
         <a class="project-link" href="https://cad.onshape.com/documents/00c556d90785a9dc82e9c061/w/4a3bde9415cc6add804a8796/e/6e7e1c93375c04b86cba874c" target="_blank" rel="noopener noreferrer">Open full CAD in Onshape <span aria-hidden="true">↗</span></a>
       </div>
       <div class="generator-stage" id="generator-stage" data-view="rotor" aria-label="Interactive three-phase AC generator preview">
@@ -164,7 +164,7 @@
             </g>
           </svg>
           <div class="generator-meter" hidden>
-            <span class="generator-meter-label">GENERATED VOLTAGE</span>
+            <span class="generator-meter-label">ESTIMATED VOLTAGE</span>
             <output id="generator-voltage" class="generator-voltage" aria-label="Estimated generated voltage">0.00 V</output>
             <span class="generator-frequency-label">Crank <output id="generator-frequency" aria-label="Crank frequency">0.0 Hz</output></span>
             <svg id="generator-voltage-graph" class="generator-voltage-graph" viewBox="0 0 320 132" role="img" aria-label="Estimated AC voltage waveform with positive and negative voltage">
@@ -176,7 +176,7 @@
           </div>
         </div>
         <p class="generator-hint" id="generator-hint">Press Full assembly or V to reveal the gears and hand crank.</p>
-        <p class="project-caption">Interactive preview, animated for clarity.</p>
+        <p class="project-caption">Mechanism illustration with a simulated waveform based on the team report’s 25 Hz test point.</p>
         <p id="generator-status" class="generator-status" role="status" aria-live="polite"></p>
       </div>
     </article>
@@ -185,16 +185,16 @@
       <div class="project-copy">
         <h3 id="scanner-title" translate="no"><span class="visually-hidden">CryptScan</span><span class="tech-heading-mount" data-tech-text="CryptScan" aria-hidden="true">CryptScan</span></h3>
         <p class="project-subtitle">From distance measurements to 3D geometry.</p>
-        <p>A mechatronics prototype built around a Raspberry Pi Pico 2 and a VL53L1X time-of-flight distance sensor, designed to reconstruct the approximate geometry of small objects through controlled rotation and layered measurements.</p>
+        <p>I’m developing a scanner that estimates the shape of a small object from distance readings as it rotates. I’m working on distance acquisition with a Pico 2 and VL53L1X sensor. A complete 3D scan is still ahead.</p>
         <dl class="project-facts"><div><dt>Focus</dt><dd>Mechatronics &amp; sensing</dd></div><div><dt>Stage</dt><dd>In development</dd></div><div><dt>Platform</dt><dd>Raspberry Pi Pico 2</dd></div></dl>
-        <details id="scanner-details"><summary aria-controls="scanner-detail-content">Inside the project</summary><div class="project-detail" id="scanner-detail-content"><p>The planned motion system pairs a StepperOnline 17HE08-1004S NEMA 17 stepper motor with an HR4988SQ-based driver board to rotate the object. A manually adjustable sensor carriage provides measurements at multiple heights.</p><p>I’m developing CryptScan through DSGN 297. The current work focuses on VL53L1X sensor integration, CircuitPython distance acquisition, and USB serial output to a computer. The planned reconstruction pipeline combines distance, commanded rotation angle, and sensor height into 3D coordinates for point-cloud visualization and PLY export.</p><p>The prototype targets coarse, recognizable geometry. Motor integration and multilayer reconstruction remain in development; a complete 3D scan has not yet been demonstrated.</p></div></details>
+        <details id="scanner-details"><summary aria-controls="scanner-detail-content">How the scanner will work</summary><div class="project-detail" id="scanner-detail-content"><p>The planned motion system pairs a StepperOnline 17HE08-1004S NEMA 17 stepper motor with an HR4988SQ-based driver board to rotate the object. A manually adjustable sensor carriage provides measurements at multiple heights.</p><p>I’m developing CryptScan through DSGN 297. The current work focuses on VL53L1X sensor integration, CircuitPython distance acquisition, and USB serial output to a computer. The planned reconstruction pipeline combines distance, commanded rotation angle, and sensor height into 3D coordinates for point-cloud visualization and PLY export.</p><p>The prototype targets coarse, recognizable geometry. Motor integration and multilayer reconstruction remain in development; a complete 3D scan has not yet been demonstrated.</p></div></details>
         <figure class="platform-photo"><img src="assets/macro-photograph-of-the-rp2350-microcontroller-on.jpg" width="1920" height="1440" alt="The RP2350 chip at the center of a Raspberry Pi Pico 2 board" loading="lazy" decoding="async"><figcaption>Platform reference: Raspberry Pi Pico 2.</figcaption></figure>
       </div>
       <div class="scanner-stage" data-ui>
-        <div class="stage-top"><span>Scan concept</span><span id="scan-angle">0% scanned</span></div>
+        <div class="stage-top"><span>Scan simulation</span><span id="scan-angle">0% scanned</span></div>
         <canvas id="scan-canvas" width="900" height="660" role="img" aria-label="Conceptual four-row spiral scan around a sample object. Use the slider to reveal the point cloud from bottom to top. This is not measured scan data.">The planned scanner rotates a sample past a distance sensor, then combines measurements at different heights into a point cloud.</canvas>
         <div class="scan-controls"><label for="sweep">Explore the scan</label><input id="sweep" name="sweep" type="range" min="0" max="360" value="0" step="1" aria-describedby="scan-caption"></div>
-        <p class="scan-fallback">The concept uses a rotating platform, a fixed distance sensor, and manual height adjustment.</p><p id="scan-caption" class="project-caption">Interactive preview, animated for clarity.</p>
+        <p class="scan-fallback">The concept uses a rotating platform, a fixed distance sensor, and manual height adjustment.</p><p id="scan-caption" class="project-caption">Simulated point cloud showing the planned scan path.</p>
       </div>
     </article>
 
@@ -223,13 +223,13 @@
         </div>
         <div class="demo-scenarios" role="group" aria-label="Preview quota state"><button type="button" data-quota="normal" aria-pressed="true">Plenty left</button><button type="button" data-quota="low" aria-pressed="false">Running low</button><button type="button" data-quota="stale" aria-pressed="false">Last known</button></div>
         <p class="demo-status" id="demo-status" aria-live="polite">Two windows. One glance.</p>
-        <p class="project-caption">Interactive preview, animated for clarity.</p>
+        <p class="project-caption">App preview with sample quota values.</p>
         <noscript><p>In the app, two rings show remaining 5-hour and weekly usage. A larger readout is also available.</p></noscript>
       </div>
       <div class="project-copy">
         <h3 id="codex-title" translate="no"><span class="visually-hidden">Codex Usage Status</span><span class="tech-heading-mount" data-tech-text="Codex Usage Status" aria-hidden="true">Codex Usage Status</span></h3>
-        <p class="project-subtitle">Usage, at a glance.</p>
-        <p>A macOS companion that makes Codex usage limits visible at a glance. An independently maintained continuation of an existing open-source app.</p>
+        <p class="project-subtitle">Codex usage limits in the macOS menu bar.</p>
+        <p>I led product direction, interface iteration, and release validation for an independent continuation of <a href="https://github.com/tollenceld/codex-usage-status">an open-source macOS app</a>. My work includes adaptive refreshing and clearer low-usage warnings.</p>
         <dl class="project-facts"><div><dt>Focus</dt><dd>Interface & release iteration</dd></div><div><dt>Stage</dt><dd>Released</dd></div><div><dt>Platform</dt><dd>macOS</dd></div></dl>
         <a class="project-link" href="https://github.com/TrevorLt/codex-usage-status">View on GitHub <span aria-hidden="true">↗</span></a>
         <details id="contribution-details"><summary aria-controls="contribution-detail-content">My contribution</summary><div class="project-detail" id="contribution-detail-content"><p><strong>Adaptive refreshing:</strong> Activity-aware 30/60/120-second intervals balance timely readings with fewer unnecessary requests.</p><p><strong>User-centered interface:</strong> Native menu-bar contrast, targeted low-usage warnings, and clear data-freshness indicators keep status readable and unobtrusive.</p><p><strong>App delivery:</strong> Custom branding, Retina-ready installers, and launch-at-login support create a cohesive macOS app experience.</p><p>I led product direction, AI-assisted iteration, and release validation for this independent continuation of <a href="https://github.com/tollenceld/codex-usage-status">tollenceld/codex-usage-status</a>.</p><a href="https://github.com/TrevorLt/codex-usage-status/releases">Browse releases</a></div></details>

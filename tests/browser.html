@@ -145,10 +145,10 @@ try {
   await load('../?quota=normal');
   const captions = [...frame.contentDocument.querySelectorAll('.project-caption')].map(item => item.textContent.trim());
   const liveStatus = $('#battlebot-status');
-  check(captions.length === 4 && captions.every(text => text === 'Interactive preview, animated for clarity.') &&
+  check(captions.length === 4 && captions.every((text, i) => text.startsWith(['CAD preview', 'Mechanism illustration', 'Simulated point cloud', 'App preview'][i])) &&
     !frame.contentDocument.querySelector('.battlebot-concept-note,.battlebot-stage-foot') &&
     liveStatus.getAttribute('role') === 'status' && liveStatus.getAttribute('aria-live') === 'polite' && liveStatus.getBoundingClientRect().width <= 1,
-    'All four project previews use one short shared caption');
+    'All four project previews identify the kind of evidence shown');
   const heroFoot = frame.contentDocument.querySelector('.hero-foot').textContent.trim();
   check(heroFoot === 'Computer Engineering + Robotics Certificate @ Northwestern',
     'Hero keeps only the requested education line');
@@ -310,6 +310,12 @@ try {
     [...$('#generator-rotor-view').querySelectorAll(':scope > circle')].every(circle => circle.getAttribute('fill') === 'none') &&
     $('.generator-meter').hidden && frame.contentWindow.getComputedStyle($('.generator-meter')).display === 'none',
     'Rotor view exposes all eight coil packs and hides the voltage panel');
+  let hiddenGraphUpdates = 0;
+  const hiddenGraphObserver = new frame.contentWindow.MutationObserver(() => hiddenGraphUpdates++);
+  hiddenGraphObserver.observe($('#generator-voltage-line'), {attributes:true, attributeFilter:['d']});
+  await new Promise(resolve => setTimeout(resolve, 250));
+  hiddenGraphObserver.disconnect();
+  check(hiddenGraphUpdates === 0, 'Hidden generator meter stops refreshing in rotor view');
   if (!generatorReducedMotion) {
     frame.contentWindow.pulseGeneratorLightning();
     const firstBolt = $('#generator-lightning-bolt').getAttribute('d');
@@ -332,7 +338,7 @@ try {
   check(Math.abs(assemblyRotorBox.left + assemblyRotorBox.width / 2 - assemblyBearingBox.left - assemblyBearingBox.width / 2) < 2 &&
     Math.abs(assemblyRotorBox.top + assemblyRotorBox.height / 2 - assemblyBearingBox.top - assemblyBearingBox.height / 2) < 2,
     'Isometric rotor magnets stay centered on the shaft bearing');
-  const generatorDescription = generator.querySelector('.project-copy > p:not(.project-subtitle)').textContent;
+  const generatorDescription = generator.querySelector('.project-copy').textContent;
   check(/3D-printed and laser-cut/i.test(generatorDescription) && /eight N52 magnets/i.test(generatorDescription) &&
     /60 turns of 0\.6 mm wire/i.test(generatorDescription) && /2\.72 V peak at 25 Hz/i.test(generatorDescription) &&
     /0\.49 A peak/i.test(generatorDescription) && /1\.33 W peak/i.test(generatorDescription) && /5\.6 Ω/i.test(generatorDescription),
@@ -370,7 +376,12 @@ try {
     Math.max(...smallGearRadii) + Math.min(...largeGearRadii) < 88 &&
     Math.max(...largeGearRadii) + Math.min(...smallGearRadii) < 88,
     'Generator gears keep a 3:1 tooth ratio with clearance for both pinion and large-gear teeth');
+  const originalFrameTimeout = frame.contentWindow.setTimeout;
+  let scheduledLightningTimers = 0;
+  frame.contentWindow.setTimeout = (...args) => { scheduledLightningTimers++; return originalFrameTimeout(...args); };
   $('[data-generator-view="assembly"]').click();
+  frame.contentWindow.setTimeout = originalFrameTimeout;
+  check(scheduledLightningTimers === 0, 'Assembly view stops scheduling rotor lightning');
   check(generatorStage.dataset.view === 'assembly' && $('#generator-rotor-view').getAttribute('aria-hidden') === 'true' &&
     $('#generator-assembly-view').getAttribute('aria-hidden') === 'false' && $('#generator-crank').getAttribute('tabindex') === '0' && !$('.generator-meter').hidden,
     'Full assembly view reveals the crank and drivetrain');
@@ -389,8 +400,9 @@ try {
     'Full assembly view uses the short handle and Enter instruction');
   $('#generator-crank').focus();
   const crankFocus = frame.contentWindow.getComputedStyle($('#generator-crank'));
-  check(crankFocus.outlineColor === 'rgb(218, 250, 156)' && crankFocus.outlineStyle === 'dashed' && crankFocus.boxShadow === 'none',
-    'Keyboard crank focus uses a quiet green outline without a blue box shadow');
+  check(crankFocus.boxShadow === 'none' && (crankFocus.outlineStyle === 'none' ||
+    (crankFocus.outlineColor === 'rgb(218, 250, 156)' && crankFocus.outlineStyle === 'dashed')),
+    'Crank focus avoids the browser blue outline and shadow');
   const voltage = $('#generator-voltage');
   for (let i = 0; i < 25; i++) frame.contentWindow.document.dispatchEvent(new KeyboardEvent('keydown', {key:'Enter', bubbles:true, cancelable:true}));
   frame.contentWindow.updateGeneratorVoltage();

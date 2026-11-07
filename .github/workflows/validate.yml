@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   validate:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@v6
       - uses: actions/setup-node@v7
@@ -22,4 +22,5 @@ jobs:
       - run: npm run build:tech-text
       - run: git diff --exit-code -- assets/tech-text.bundle.js assets/tech-text.bundle.css
       - run: node --check script.js
+      - run: npm run test:browser
       - run: git diff --check
