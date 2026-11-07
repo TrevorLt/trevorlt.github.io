@@ -16,6 +16,8 @@ Open http://localhost:4173. Edit `index.html`, `styles.css` and `script.js`. To 
 
 With the preview server running, open http://localhost:4173/tests/browser.html. The page checks saved quota values, recharge and mode switching, both displays, interrupted animations, invalid URL values, rapid disclosure reversals, the BattleBot GLB structure, 2206 cross mount on the source upright plate's four-hole pattern, aligned motor and weapon pulleys with a direct belt, a weapon shaft ending inside the body side walls, replaceable-armor separation, rear motors and wheel motion, reversible exploded view, isometric camera, the generator's view switching, crank-driven 3:1 motion and estimated voltage, equal project preview widths, and drivetrain controls. It shows PASS or FAIL without local packages; the 3D preview loads Model Viewer from its CDN.
 
+Run `npm run test:browser` to launch the same checks in headless Chrome. GitHub Actions runs this command on every pull request and push to `main`.
+
 ## Credits
 
 - Codex Usage Status app icon: [TrevorLt/codex-usage-status](https://github.com/TrevorLt/codex-usage-status), MIT. The application continues the original work of [tollenceld](https://github.com/tollenceld/codex-usage-status).

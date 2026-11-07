@@ -2,7 +2,8 @@
   "name": "trevor-lin-portfolio",
   "private": true,
   "scripts": {
-    "build:tech-text": "esbuild src/tech-text.jsx --bundle --minify --format=iife --jsx=automatic --define:process.env.NODE_ENV=\\\"production\\\" --outfile=assets/tech-text.bundle.js"
+    "build:tech-text": "esbuild src/tech-text.jsx --bundle --minify --format=iife --jsx=automatic --define:process.env.NODE_ENV=\\\"production\\\" --outfile=assets/tech-text.bundle.js",
+    "test:browser": "node tests/run-browser.mjs"
   },
   "devDependencies": {
     "esbuild": "0.28.2",

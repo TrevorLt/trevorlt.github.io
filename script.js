@@ -370,6 +370,7 @@ const generatorViewButtons = [...generatorStage.querySelectorAll('[data-generato
 const generatorCrankCenter = { x: 88, y: 0 };
 let generatorAngle = 0, generatorSpeed = 0, generatorDragging = false, generatorPointerAngle = 0, generatorPointerTime = 0;
 let generatorFrame = 0, generatorLastFrame = 0, generatorFrontAngle = 0, generatorLastKeyTurn = 0;
+let generatorMeterTimer = 0, generatorLightningTimer = 0;
 const maxCrankSpeed = 30 * Math.PI * 2;
 function pulseGeneratorLightning() {
   if (reduced.matches || generatorStage.dataset.view !== 'rotor' || document.hidden) return;
@@ -396,7 +397,10 @@ function pulseGeneratorLightning() {
   generatorLightning.classList.add('is-flashing');
 }
 function scheduleGeneratorLightning() {
-  setTimeout(() => { pulseGeneratorLightning(); scheduleGeneratorLightning(); }, 1800 + Math.random() * 2400);
+  clearTimeout(generatorLightningTimer);
+  generatorLightningTimer = 0;
+  if (reduced.matches || generatorStage.dataset.view !== 'rotor' || document.hidden) return;
+  generatorLightningTimer = setTimeout(() => { pulseGeneratorLightning(); scheduleGeneratorLightning(); }, 1800 + Math.random() * 2400);
 }
 function gearPath(teeth, rootRadius, tipRadius) {
   const points = [];
@@ -425,6 +429,11 @@ function updateGeneratorVoltage() {
     const y = 64 - sample / 3.3 * 44;
     return (index ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1);
   }).join(' '));
+}
+function scheduleGeneratorMeter() {
+  clearInterval(generatorMeterTimer);
+  generatorMeterTimer = 0;
+  if (generatorStage.dataset.view === 'assembly' && !document.hidden) generatorMeterTimer = setInterval(updateGeneratorVoltage, 100);
 }
 function renderGenerator() {
   const crankDegrees = generatorAngle * 180 / Math.PI;
@@ -466,7 +475,8 @@ function setGeneratorView(view) {
   const crankHadFocus = document.activeElement === generatorCrank;
   generatorStage.dataset.view = view;
   generatorMeter.hidden = view !== 'assembly';
-  if (view === 'rotor') pulseGeneratorLightning();
+  scheduleGeneratorLightning();
+  scheduleGeneratorMeter();
   generatorViewButtons.forEach(button => button.setAttribute('aria-pressed', String(button.dataset.generatorView === view)));
   document.querySelector('#generator-rotor-view').setAttribute('aria-hidden', String(view !== 'rotor'));
   const assembly = document.querySelector('#generator-assembly-view');
@@ -561,12 +571,16 @@ window.addEventListener('keydown', event => {
 });
 reduced.addEventListener('change', () => {
   if (generatorStage.dataset.view === 'rotor' && !reduced.matches) scheduleGenerator();
+  scheduleGeneratorLightning();
+});
+document.addEventListener('visibilitychange', () => {
+  scheduleGeneratorLightning();
+  scheduleGeneratorMeter();
 });
 generatorCrank.setAttribute('tabindex', '-1');
 document.querySelector('#generator-rotor-view').setAttribute('aria-hidden', 'false');
 renderGenerator();
 updateGeneratorVoltage();
-setInterval(updateGeneratorVoltage, 100);
 scheduleGeneratorLightning();
 scheduleGenerator();
 
