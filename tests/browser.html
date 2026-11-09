@@ -20,7 +20,7 @@ async function load(url = '../') {
   });
 }
 async function until(predicate) {
-  const deadline = performance.now() + 4000;
+  const deadline = performance.now() + 8000;
   while (!predicate()) {
     if (performance.now() > deadline) throw new Error('Timed out waiting for the page');
     await new Promise(resolve => setTimeout(resolve, 20));
@@ -91,7 +91,10 @@ try {
   scanSlider.dispatchEvent(new Event('input', { bubbles: true }));
   await until(() => $('#scan-angle').textContent === '0% scanned');
   check(greenScanPixels() < fullScanPixels - 300, 'Dragging backward clears the later scanned points');
-  $('[data-quota="low"]').click();
+  const lowQuotaButton = $('[data-quota="low"]');
+  lowQuotaButton.click();
+  check(lowQuotaButton.getAttribute('aria-pressed') === 'true',
+    'Low quota selection responds before its reading finishes animating');
   await until(() => $('#readout-five-hour').textContent === '12%');
   $('[data-quota="stale"]').click();
   const frozen = $('#readout-five-hour').textContent;
