@@ -156,3 +156,4 @@ summary:focus-visible{outline-offset:-3px}
 .project-index{gap:12px;margin-bottom:clamp(40px,5vw,72px)}
 .project-index a{flex-direction:column;align-items:flex-start;justify-content:flex-start;gap:4px;line-height:1.35}
 @media(max-width:600px){.hero{height:auto;min-height:0;padding:90px var(--gutter) 30px}.hero-foot{position:static;margin-top:22px}.hero-foot span:last-child{text-align:left}}
+main{overflow-x:clip}
