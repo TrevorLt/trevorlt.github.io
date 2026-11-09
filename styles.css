@@ -45,6 +45,7 @@ a:hover{opacity:1;text-decoration:underline;text-decoration-thickness:2px}
 .footer-bottom a{display:inline-flex;align-items:center;min-height:44px}
 .photo-credit{line-height:1.9}
 .scanner-stage,.codex-demo{color-scheme:dark}
+.stage-top{justify-content:flex-end}
 summary{list-style:none;display:flex;align-items:center;gap:20px;min-height:48px;padding:12px 6px;max-width:100%}
 summary::-webkit-details-marker{display:none}
 summary::after{content:'›';font-size:24px;line-height:1;display:block;transform:rotate(0deg);transition:transform .25s var(--ease)}

@@ -15,10 +15,10 @@
   <link rel="preload" href="assets/anton.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans-semibold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261105-project-evidence">
+  <link rel="stylesheet" href="styles.css?v=20261109-scanner-label-v1">
   <link rel="stylesheet" href="assets/tech-text.bundle.css?v=20261103-reactbits-v2">
   <script id="model-viewer-loader" type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.4.0/model-viewer.min.js"></script>
-  <script src="script.js?v=20261107-generator-idle-v1" defer></script>
+  <script src="script.js?v=20261109-scanner-single-helix-v7" defer></script>
   <script src="assets/tech-text.bundle.js?v=20261104-reactbits-v9" defer></script>
   <noscript><style>.scanner-stage canvas,.scanner-stage .scan-controls,.codex-demo .demo-styles,.codex-demo .demo-scenarios{display:none}.scanner-stage .scan-fallback{display:block}</style></noscript>
 </head>
@@ -191,10 +191,10 @@
         <figure class="platform-photo"><img src="assets/macro-photograph-of-the-rp2350-microcontroller-on.jpg" width="1920" height="1440" alt="The RP2350 chip at the center of a Raspberry Pi Pico 2 board" loading="lazy" decoding="async"><figcaption>Platform reference: Raspberry Pi Pico 2.</figcaption></figure>
       </div>
       <div class="scanner-stage" data-ui>
-        <div class="stage-top"><span>Scan simulation</span><span id="scan-angle">0% scanned</span></div>
-        <canvas id="scan-canvas" width="900" height="660" role="img" aria-label="Conceptual four-row spiral scan around a sample object. Use the slider to reveal the point cloud from bottom to top. This is not measured scan data.">The planned scanner rotates a sample past a distance sensor, then combines measurements at different heights into a point cloud.</canvas>
-        <div class="scan-controls"><label for="sweep">Explore the scan</label><input id="sweep" name="sweep" type="range" min="0" max="360" value="0" step="1" aria-describedby="scan-caption"></div>
-        <p class="scan-fallback">The concept uses a rotating platform, a fixed distance sensor, and manual height adjustment.</p><p id="scan-caption" class="project-caption">Simulated point cloud showing the planned scan path.</p>
+        <div class="stage-top"><output id="scan-angle">0% scanned</output></div>
+        <canvas id="scan-canvas" width="900" height="660" role="img" aria-label="Concept scan: the fixed left sensor rises with the sample as one continuous helical pass reveals about three point-cloud rows per revolution. No measured scan data.">The fixed sensor rises in sync with the turntable, lighting about three point-cloud rows per revolution.</canvas>
+        <div class="scan-controls"><label class="visually-hidden" for="sweep">Scan progress</label><input id="sweep" name="sweep" type="range" min="0" max="360" value="0" step="1" aria-controls="scan-canvas"></div>
+        <p class="scan-fallback">Fixed sensor, rising spiral, about three rows per turn.</p>
       </div>
     </article>
 
