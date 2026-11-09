@@ -32,8 +32,65 @@ function sameReadings() {
   check($('#weekly-number').textContent + '%' === $('#readout-weekly').textContent,
     'Weekly ring and readout agree');
 }
+function greenScanPixels() {
+  const canvas = $('#scan-canvas'), pixels = canvas.getContext('2d').getImageData(0, 0, canvas.width, canvas.height).data;
+  let count = 0;
+  for (let y = 180; y < 560; y++) for (let x = 330; x < 580; x++) {
+    const i = (y * canvas.width + x) * 4;
+    if (pixels[i + 1] > pixels[i] + 14 && pixels[i + 1] > pixels[i + 2] + 24 && pixels[i + 1] > 130) count++;
+  }
+  return count;
+}
 try {
+  await load('../?sweep=360');
+  check($('#sweep').value === '0' && $('#scan-angle').textContent === '0% scanned' &&
+    frame.contentWindow.eval('scanObjectCloud.filter(point => point.captureTime <= scanProgress).length') === 0,
+    'Scanner always opens at the left with no captured points');
   await load();
+  const scanSlider = $('#sweep');
+  check($('.scanner-stage .stage-top').textContent.trim() === '0% scanned' &&
+    getComputedStyle($('.scanner-stage .stage-top')).justifyContent === 'flex-end',
+    'Scanner stage uses its layout without an extra visible label');
+  check(scanSlider.labels.length === 1 && scanSlider.labels[0].classList.contains('visually-hidden') &&
+    !$('#scan-caption') && $('#scan-canvas').getAttribute('aria-label').includes('about three point-cloud rows per revolution'),
+    'Scanner uses a labeled slider and the canvas carries the concept description');
+  const scanPath = frame.contentWindow.eval('scanObjectCloud');
+  check(scanPath[0].captureTime > 0 && scanPath.at(-1).captureTime === 1 && scanPath.every((point, i) => {
+    const head = scanPath[i - i % 3];
+    return point.captureTime === head.captureTime && Math.abs(point.x * head.z - point.z * head.x) < .00001 && point.x * head.x + point.z * head.z > 0 &&
+      (i < 3 || i % 3 !== 0 || point.captureTime > scanPath[i - 3].captureTime && point.y > scanPath[i - 3].y);
+  }) && Math.min(...scanPath.map(point => point.y)) < -120 && Math.max(...scanPath.map(point => point.y)) > 106,
+  'Point cloud follows one taller ascending scan path with a three-point footprint');
+  check($('#scan-angle').textContent === '0% scanned' && scanSlider.value === '0',
+    'The initial scan readout and slider both start at zero');
+  const initialScanPixels = greenScanPixels();
+  scanSlider.value = '60';
+  scanSlider.dispatchEvent(new Event('input', { bubbles: true }));
+  check(scanSlider.getAttribute('aria-valuetext') === '17% scanned',
+    'The slider immediately reports its exact scan progress');
+  await new Promise(resolve => frame.contentWindow.requestAnimationFrame(() => frame.contentWindow.requestAnimationFrame(resolve)));
+  check($('#scan-angle').textContent === '17% scanned',
+    'The sensor advances with the point cloud on the next paint');
+  const oneTurnScanPixels = greenScanPixels();
+  check(oneTurnScanPixels > initialScanPixels + 300, 'A single helical turn lights the surface point cloud');
+  scanSlider.value = '180';
+  scanSlider.dispatchEvent(new Event('input', { bubbles: true }));
+  await until(() => $('#scan-angle').textContent === '50% scanned');
+  check(scanSlider.getAttribute('aria-valuetext') === '50% scanned',
+    'The half-scan progress is reported as a percentage');
+  const halfScanPixels = greenScanPixels();
+  check(halfScanPixels > initialScanPixels + 300, 'Half scan visibly lights the object point cloud');
+  scanSlider.value = '360';
+  scanSlider.dispatchEvent(new Event('input', { bubbles: true }));
+  await until(() => $('#scan-angle').textContent === '100% scanned');
+  check(scanSlider.getAttribute('aria-valuetext') === '100% scanned',
+    'Full scan is reported as a percentage');
+  const fullScanPixels = greenScanPixels();
+  check(fullScanPixels > halfScanPixels + 300, 'Full scan lights more of the point cloud than the halfway state');
+  scanSlider.value = '0';
+  scanSlider.dispatchEvent(new Event('input', { bubbles: true }));
+  await until(() => $('#scan-angle').textContent === '0% scanned');
+  check(greenScanPixels() < fullScanPixels - 300, 'Dragging backward clears the later scanned points');
   $('[data-quota="low"]').click();
   await until(() => $('#readout-five-hour').textContent === '12%');
   $('[data-quota="stale"]').click();
@@ -127,7 +184,7 @@ try {
   check($('#readout-five-hour').textContent === '~72%', 'Old stale links keep the default');
   await load('../?quota=low&quotaValue=99&sweep=bad&display=bad');
   check($('#readout-five-hour').textContent === '12%', 'Ignore saved values outside stale mode');
-  check($('#scan-angle').textContent === '0% scanned' && !$('#quota-rings').hidden,
+  check($('#scan-angle').textContent === '0% scanned' && $('#sweep').value === '0' && !$('#quota-rings').hidden,
     'Invalid scan and display values use defaults');
   for (const selector of ['#scanner-details', '#contribution-details']) {
     const summary = $(selector + ' summary');
@@ -145,10 +202,11 @@ try {
   await load('../?quota=normal');
   const captions = [...frame.contentDocument.querySelectorAll('.project-caption')].map(item => item.textContent.trim());
   const liveStatus = $('#battlebot-status');
-  check(captions.length === 4 && captions.every((text, i) => text.startsWith(['CAD preview', 'Mechanism illustration', 'Simulated point cloud', 'App preview'][i])) &&
+  check(captions.length === 3 && captions.every((text, i) => text.startsWith(['CAD preview', 'Mechanism illustration', 'App preview'][i])) &&
+    $('#scan-canvas').getAttribute('aria-label').includes('fixed left sensor') &&
     !frame.contentDocument.querySelector('.battlebot-concept-note,.battlebot-stage-foot') &&
     liveStatus.getAttribute('role') === 'status' && liveStatus.getAttribute('aria-live') === 'polite' && liveStatus.getBoundingClientRect().width <= 1,
-    'All four project previews identify the kind of evidence shown');
+    'Project previews use compact evidence labels');
   const heroFoot = frame.contentDocument.querySelector('.hero-foot').textContent.trim();
   check(heroFoot === 'Computer Engineering + Robotics Certificate @ Northwestern',
     'Hero keeps only the requested education line');

@@ -1,7 +1,7 @@
 'use strict';
 
 const reduced = window.matchMedia('(prefers-reduced-motion: reduce)');
-const urlDefaults = { display: 'rings', quota: 'normal', sweep: '0', scanner: '0', contribution: '0' };
+const urlDefaults = { display: 'rings', quota: 'normal', scanner: '0', contribution: '0' };
 function updateURL(key, value) {
   const url = new URL(window.location.href);
   if (value === null || String(value) === urlDefaults[key]) url.searchParams.delete(key);
@@ -82,99 +82,108 @@ window.addEventListener('resize', () => {
 const canvas = document.querySelector('#scan-canvas');
 const slider = document.querySelector('#sweep');
 const angleLabel = document.querySelector('#scan-angle');
-const scanTurns = 6, scanLanes = 4, scanSamples = scanTurns * 96;
-let scanProgress = 0, scanTarget = 0, scanFrame = 0, scanLastTime = 0;
-// Four adjacent helical sampling tracks are an illustrative reveal, not a
-// claim that the single-sensor prototype captures four physical rows at once.
-function scanPoint(t, lane) {
-  const row = t * 24 + lane;
-  const u = row / 27;
-  const radius = 82 + 30 * Math.sin(u * Math.PI) + 14 * Math.cos(u * Math.PI * 2);
-  const angle = t * scanTurns * Math.PI * 2;
-  return { x: Math.cos(angle) * radius, y: row * 10 - 105, z: Math.sin(angle) * radius };
+const scanBands = 18, scanSlices = 48, scanRowsPerTurn = 3;
+const scanTurns = scanBands / scanRowsPerTurn, scanTau = Math.PI * 2;
+let scanProgress = 0, scanFrame = 0;
+function scanSurface(height, angle) {
+  const radius = (52 + 12 * Math.sin(height * Math.PI) - 5 * height)
+    * (1 + .12 * Math.cos(2 * angle + .35) + .05 * Math.sin(3 * angle - height));
+  return { x: Math.cos(angle) * radius, y: -123 + height * 230, z: Math.sin(angle) * radius };
 }
-const scanCloud = Array.from({ length: (scanSamples + 1) * scanLanes }, (_, i) => {
-  const t = Math.floor(i / scanLanes) / scanSamples;
-  return { ...scanPoint(t, i % scanLanes), t };
+function rotateScanPoint(point, angle) {
+  return { x: point.x * Math.cos(angle) - point.z * Math.sin(angle), y: point.y,
+    z: point.x * Math.sin(angle) + point.z * Math.cos(angle) };
+}
+const scanMargin = 1 / scanBands;
+function scanHeight(progress) {
+  return scanMargin + progress * (1 - 2 * scanMargin);
+}
+const scanSamples = scanTurns * scanSlices;
+const scanObjectCloud = Array.from({ length: scanSamples * scanRowsPerTurn }, (_, i) => {
+  const t = (Math.floor(i / scanRowsPerTurn) + 1) / scanSamples;
+  const lane = i % scanRowsPerTurn - (scanRowsPerTurn - 1) / 2;
+  const height = scanHeight(t) + lane / scanBands;
+  return { ...scanSurface(height, Math.PI + t * scanTurns * scanTau), captureTime: t };
 });
 function drawScan() {
   if (!canvas || !canvas.getContext) return;
   const ctx = canvas.getContext('2d');
   if (!ctx) return;
   const w = canvas.width, h = canvas.height, p = scanProgress;
-  const project = ({ x, y, z }) => ({ x: w * .5 + (x * .89 - z * .46) * 1.25, y: h * .55 + (x * .22 + z * .4 - y) * 1.25, depth: x * .46 + z * .89 });
-  ctx.clearRect(0, 0, w, h);
-  // Ground plane stays still; the sampling head winds upward around the object.
-  ctx.lineWidth = 1.5; ctx.strokeStyle = '#80936c'; ctx.beginPath();
-  for (let i = 0; i <= 120; i++) {
-    const a = i / 120 * Math.PI * 2;
-    const q = project({ x: Math.cos(a) * 185, y: -128, z: Math.sin(a) * 185 });
-    i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y);
-  }
-  ctx.stroke();
-  const items = scanCloud.map(point => ({ ...project(point), point, kind: 'point' }));
-  // Short, fading tracks make the spiral legible without covering the cloud.
-  if (p > 0) for (let lane = 0; lane < scanLanes; lane++) {
-    const start = Math.max(0, p - 1.15 / scanTurns);
-    const steps = Math.max(1, Math.ceil((p - start) * 900));
-    for (let i = 0; i < steps; i++) {
-      const t = start + (p - start) * i / steps;
-      const a = project(scanPoint(t, lane));
-      const b = project(scanPoint(start + (p - start) * (i + 1) / steps, lane));
-      items.push({ kind: 'trail', depth: (a.depth + b.depth) / 2, a, b, alpha: .12 + .55 * i / steps });
+  const tableAngle = -p * scanTurns * scanTau;
+  const project = ({ x, y, z }) => ({ x: w * .5 + (x * .89 - z * .46) * 1.25,
+    y: h * .55 + (x * .22 + z * .4 - y) * 1.25, depth: x * .46 + z * .89 });
+  const drawDisc = (radius, top, thickness, topColor, sideColor) => {
+    const start = -Math.atan2(.46, .89), end = start + Math.PI;
+    ctx.beginPath();
+    for (let i = 0; i <= 48; i++) {
+      const a = start + (end - start) * i / 48, q = project({ x: Math.cos(a) * radius, y: top, z: Math.sin(a) * radius });
+      i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y);
     }
+    for (let i = 48; i >= 0; i--) {
+      const a = start + (end - start) * i / 48, q = project({ x: Math.cos(a) * radius, y: top - thickness, z: Math.sin(a) * radius });
+      ctx.lineTo(q.x, q.y);
+    }
+    ctx.closePath(); ctx.fillStyle = sideColor; ctx.fill();
+    ctx.beginPath();
+    for (let i = 0; i <= 96; i++) {
+      const a = i / 96 * scanTau, q = project({ x: Math.cos(a) * radius, y: top, z: Math.sin(a) * radius });
+      i ? ctx.lineTo(q.x, q.y) : ctx.moveTo(q.x, q.y);
+    }
+    ctx.closePath(); ctx.fillStyle = topColor; ctx.fill(); ctx.strokeStyle = '#6b7962'; ctx.lineWidth = 1.5; ctx.stroke();
+  };
+  ctx.clearRect(0, 0, w, h);
+  drawDisc(178, -145, 16, '#272e25', '#394233');
+  drawDisc(150, -129, 14, '#424d3b', '#56634c');
+  for (let i = 0; i < 6; i++) {
+    const a = tableAngle + i * scanTau / 6;
+    const from = project({ x: Math.cos(a) * 112, y: -128, z: Math.sin(a) * 112 });
+    const to = project({ x: Math.cos(a) * 139, y: -128, z: Math.sin(a) * 139 });
+    ctx.strokeStyle = 'rgba(208,220,192,.38)'; ctx.lineWidth = 3; ctx.beginPath();
+    ctx.moveTo(from.x, from.y); ctx.lineTo(to.x, to.y); ctx.stroke();
   }
-  const angle = p * scanTurns * Math.PI * 2;
-  const center = scanPoint(p, 1.5);
-  const tip = project(center);
-  const sensor = project({ x: Math.cos(angle) * 180, y: center.y, z: Math.sin(angle) * 180 });
-  items.push({ kind: 'needle', depth: (sensor.depth + tip.depth) / 2, sensor, tip });
+  const tableMarker = project({ x: Math.cos(tableAngle) * 141, y: -128, z: Math.sin(tableAngle) * 141 });
+  ctx.fillStyle = '#dafa9c'; ctx.beginPath(); ctx.arc(tableMarker.x, tableMarker.y, 5, 0, scanTau); ctx.fill();
+
+  const mastX = -196, sensorY = -123 + scanHeight(p) * 230;
+  const mastBase = project({ x: mastX, y: -145, z: 0 }), mastTop = project({ x: mastX, y: 110, z: 0 });
+  ctx.lineCap = 'round'; ctx.strokeStyle = '#68745e'; ctx.lineWidth = 12; ctx.beginPath();
+  ctx.moveTo(mastBase.x, mastBase.y); ctx.lineTo(mastTop.x, mastTop.y); ctx.stroke();
+  ctx.strokeStyle = '#a3ad95'; ctx.lineWidth = 2; ctx.beginPath(); ctx.moveTo(mastBase.x + 3, mastBase.y); ctx.lineTo(mastTop.x + 3, mastTop.y); ctx.stroke();
+  const railStart = project({ x: mastX, y: sensorY, z: 0 }), railEnd = project({ x: -116, y: sensorY, z: 0 });
+  ctx.strokeStyle = '#7c8872'; ctx.lineWidth = 8; ctx.beginPath(); ctx.moveTo(railStart.x, railStart.y); ctx.lineTo(railEnd.x, railEnd.y); ctx.stroke();
+  ctx.strokeStyle = '#b3bd9f'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.moveTo(railStart.x, railStart.y - 2); ctx.lineTo(railEnd.x, railEnd.y - 2); ctx.stroke();
+
+  const items = scanObjectCloud.map(point => ({ ...project(rotateScanPoint(point, tableAngle)), point, kind: 'surface' }));
   items.sort((a, b) => a.depth - b.depth);
   for (const item of items) {
     const front = item.depth > 0;
-    if (item.kind === 'point') {
-      const captured = p > 0 && item.point.t <= p;
-      const edge = captured ? Math.max(0, 1 - (p - item.point.t) * 75) : 0;
-      ctx.fillStyle = captured ? `rgba(218,250,156,${(front ? .84 : .38) + edge * .14})` : `rgba(139,151,125,${front ? .28 : .13})`;
-      ctx.beginPath(); ctx.arc(item.x, item.y, captured ? 2 + edge * .8 : 1.25, 0, Math.PI * 2); ctx.fill();
-    } else if (item.kind === 'trail') {
-      ctx.strokeStyle = `rgba(218,250,156,${item.alpha * (front ? 1 : .4)})`;
-      ctx.lineWidth = 1.4; ctx.beginPath(); ctx.moveTo(item.a.x, item.a.y); ctx.lineTo(item.b.x, item.b.y); ctx.stroke();
-    } else {
-      ctx.globalAlpha = front ? 1 : .5;
-      // The whole needle follows the head's angle AND height, including its base.
-      ctx.strokeStyle = '#dafa9c'; ctx.lineWidth = 2.5; ctx.beginPath();
-      ctx.moveTo(sensor.x, sensor.y); ctx.lineTo(tip.x, tip.y); ctx.stroke();
-      ctx.save(); ctx.translate(sensor.x, sensor.y); ctx.rotate(Math.atan2(tip.y - sensor.y, tip.x - sensor.x));
-      ctx.fillStyle = '#dafa9c'; ctx.fillRect(-7, -7, 14, 14); ctx.restore();
-      for (let lane = 0; lane < scanLanes; lane++) {
-        const q = project(scanPoint(p, lane));
-        ctx.fillStyle = '#edffc9'; ctx.beginPath(); ctx.arc(q.x, q.y, 3.5, 0, Math.PI * 2); ctx.fill();
-      }
-      ctx.globalAlpha = 1;
-    }
+    const captured = item.point.captureTime <= p;
+    const leading = captured ? Math.max(0, 1 - (p - item.point.captureTime) * scanTurns * 8) : 0;
+    ctx.fillStyle = captured
+      ? `rgba(218,250,156,${front ? .8 + leading * .2 : .16 + leading * .06})`
+      : `rgba(171,184,159,${front ? .24 : .055})`;
+    const radius = captured ? (front ? 2.1 : 1.6) + leading * 1.3 : (front ? 1.3 : .9);
+    ctx.beginPath(); ctx.arc(item.x, item.y, radius, 0, scanTau); ctx.fill();
   }
-  angleLabel.textContent = Math.round(p * 100) + '% scanned';
+
+  const surfaceTip = project(rotateScanPoint(scanSurface(scanHeight(p), Math.PI + p * scanTurns * scanTau), tableAngle));
+  const sensorLens = project({ x: -107, y: sensorY, z: 0 });
+  ctx.setLineDash([5, 6]); ctx.strokeStyle = 'rgba(218,250,156,.7)'; ctx.lineWidth = 2; ctx.beginPath();
+  ctx.moveTo(sensorLens.x, sensorLens.y); ctx.lineTo(surfaceTip.x, surfaceTip.y); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = '#dafa9c'; ctx.fillRect(sensorLens.x - 3, sensorLens.y - 3, 6, 6);
+  ctx.fillStyle = '#263126'; ctx.fillRect(railEnd.x - 13, railEnd.y - 12, 26, 24);
+  ctx.strokeStyle = '#aeb99f'; ctx.lineWidth = 2; ctx.strokeRect(railEnd.x - 13, railEnd.y - 12, 26, 24);
+  ctx.fillStyle = '#dafa9c'; ctx.beginPath(); ctx.arc(sensorLens.x, sensorLens.y, 4, 0, scanTau); ctx.fill();
+  angleLabel.textContent = `${Math.round(p * 100)}% scanned`;
 }
-function settleScan() {
-  cancelAnimationFrame(scanFrame); scanFrame = 0; scanLastTime = 0;
-  scanProgress = scanTarget; drawScan();
-}
-function animateScan(now) {
-  const dt = scanLastTime ? Math.min(40, now - scanLastTime) : 16;
-  scanLastTime = now;
-  scanProgress += (scanTarget - scanProgress) * (1 - Math.exp(-dt / 65));
-  if (Math.abs(scanTarget - scanProgress) < .00008) { settleScan(); return; }
-  drawScan(); scanFrame = requestAnimationFrame(animateScan);
-}
-function updateScan(animate = true) {
-  scanTarget = Number(slider.value) / 360;
-  slider.setAttribute('aria-valuetext', Math.round(scanTarget * 100) + ' percent scanned; six spiral turns, four rows at a time');
-  if (!animate || reduced.matches) settleScan();
-  else if (!scanFrame) { scanLastTime = 0; scanFrame = requestAnimationFrame(animateScan); }
+function updateScan() {
+  scanProgress = Number(slider.value) / 360;
+  const percent = Math.round(scanProgress * 100);
+  slider.setAttribute('aria-valuetext', `${percent}% scanned`);
+  if (!scanFrame) scanFrame = requestAnimationFrame(() => { scanFrame = 0; drawScan(); });
 }
 slider.addEventListener('input', () => updateScan());
-slider.addEventListener('change', () => updateURL('sweep', slider.value));
 
 // The display study uses example values; it never reads account data.
 const codexDemo = document.querySelector('.codex-demo');
@@ -304,13 +313,10 @@ function restoreURLState() {
   quotaWeeklyValue = 54 + (quotaValue - 72) * .175;
   quotaModeValue = quotaValue;
   setQuota(params.get('quota'), false);
-  const rawSweep = params.get('sweep');
-  const sweep = rawSweep === null ? 0 : Number(rawSweep);
-  slider.value = Number.isFinite(sweep) ? Math.max(0, Math.min(360, Math.round(sweep))) : 0;
-  updateScan(false);
   for (const disclosure of disclosures) disclosure.set(params.get(disclosure.key) === '1', { animate: false, sync: false });
 }
 restoreURLState();
+updateScan();
 window.addEventListener('popstate', restoreURLState);
 
 // Move only the dark field above a permanent white hero background. Stop
