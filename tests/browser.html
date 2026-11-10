@@ -419,9 +419,13 @@ try {
     Math.abs(isoMatrix.c) < .002 && Math.abs(isoMatrix.d - 1) < .002 && Math.abs(isoMatrix.e - 26) < .002 &&
     $('#generator-large-gear .generator-large-gear-path').getAttribute('transform') === 'translate(88 0)' &&
     $('#generator-large-gear circle').getAttribute('cx') === '88' && $('#generator-large-gear circle').getAttribute('cy') === '0' &&
-    Boolean($('#generator-drive-shaft').compareDocumentPosition($('#generator-stator-face')) & Node.DOCUMENT_POSITION_FOLLOWING) &&
-    $('#generator-crank-hub').getAttribute('transform') === 'translate(88 0)',
-    'Generator shaft tucks behind its face, exits at the pinion, and meshes with the mounted crank gear');
+    Boolean($('#generator-stator-face').compareDocumentPosition($('#generator-assembly-bearing')) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+    Boolean($('#generator-assembly-bearing').compareDocumentPosition($('#generator-drive-train')) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+    Boolean($('#generator-drive-train').compareDocumentPosition($('#generator-drive-shaft')) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+    $('#generator-crank-hub').getAttribute('transform') === 'translate(88 0)' &&
+    $('#generator-crank-arm').querySelectorAll('path').length === 2 &&
+    $('#generator-crank-spindle').querySelectorAll('path').length === 3 && $('#generator-crank-grip').querySelector('ellipse'),
+    'Generator shaft renders over the rotor bearing and pinion, with both crank arm lines grouped for rotation');
   check(new Set([...frame.contentDocument.querySelectorAll('[id]')].map(node => node.id)).size === frame.contentDocument.querySelectorAll('[id]').length,
     'Generator drivetrain elements have unique IDs');
   check($('#generator-rear-face').getAttribute('cx') === '165' && $('#generator-rear-face').getAttribute('cy') === '225',
@@ -478,14 +482,25 @@ try {
   const initialVoltageGraph = $('#generator-voltage-line').getAttribute('d');
   const voltageUpdates = [];
   const waveformSamples = [];
+  const crankPositions = [];
+  const crankLinksConnected = [];
   const voltageObserver = new frame.contentWindow.MutationObserver(() => {
     voltageUpdates.push(frame.contentWindow.performance.now());
     waveformSamples.push($('#generator-voltage-line').getAttribute('d'));
   });
   voltageObserver.observe($('#generator-voltage-line'), {attributes:true, attributeFilter:['d']});
-  for (let i = 0; i < 13; i++) {
+  for (let i = 0; i < 24; i++) {
     $('#generator-crank').dispatchEvent(new KeyboardEvent('keydown', {key:'ArrowRight', bubbles:true, cancelable:true}));
     await new Promise(resolve => setTimeout(resolve, 100));
+    const crankArmAngle = Number($('#generator-crank-arm').getAttribute('transform').match(/rotate\(([-\d.]+)/)[1]);
+    const radians = crankArmAngle * Math.PI / 180;
+    const crankX = 88 + 82 * Math.sin(radians);
+    const crankY = -82 * Math.cos(radians);
+    const spindlePosition = $('#generator-crank-spindle').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\)/).slice(1).map(Number);
+    const gripPosition = $('#generator-crank-grip').getAttribute('transform').match(/translate\(([-\d.]+) ([-\d.]+)\)/).slice(1).map(Number);
+    crankPositions.push(crankArmAngle);
+    crankLinksConnected.push(Math.abs(spindlePosition[0] - crankX) < .1 && Math.abs(spindlePosition[1] - crankY) < .1 &&
+      Math.abs(gripPosition[0] - crankX - 32) < .1 && Math.abs(gripPosition[1] - crankY - 20) < .1);
   }
   await until(() => voltageUpdates.length >= 3);
   voltageObserver.disconnect();
@@ -494,6 +509,11 @@ try {
   const rotorAngle = Number($('#generator-small-gear').getAttribute('transform').match(/rotate\(([-\d.]+)/)[1]);
   check(Number.parseFloat(voltage.textContent) > 0 && Math.abs(rotorAngle + 3 * gearAngle - 180 / 14) < .01,
     'Turning the crank spins the rotor at 3× speed and produces a voltage estimate');
+  const crankArmAngle = Number($('#generator-crank-arm').getAttribute('transform').match(/rotate\(([-\d.]+)/)[1]);
+  check(Math.abs(crankArmAngle - gearAngle) < .01 && crankLinksConnected.every(Boolean),
+    'Crank arm, connecting spindle and cylindrical grip stay connected at every sampled pose');
+  check(new Set(crankPositions.map(angle => Math.floor(((angle % 360) + 360) % 360 / 90))).size === 4,
+    'Animated crank carries the attached grip through all four quadrants');
   check($('#generator-voltage-line').getAttribute('d') !== initialVoltageGraph,
     'Voltage graph follows the generated reading');
   check(waveformSamples.some(path => {
@@ -510,9 +530,10 @@ try {
     'Enter accelerates the generator without needing handle rotation');
   const gearMatrix = $('#generator-gear-plane').getScreenCTM();
   const localPoint = (x, y) => new frame.contentWindow.DOMPoint(x, y).matrixTransform(gearMatrix);
-  const dragStart = localPoint(122, -82);
-  const dragRadius = Math.hypot(122 - 88, -82);
-  const dragEnd = localPoint(88 + dragRadius * Math.cos(-Math.PI / 2), dragRadius * Math.sin(-Math.PI / 2));
+  const dragStartAngle = Number($('#generator-crank-arm').getAttribute('transform').match(/rotate\(([-\d.]+)/)[1]) * Math.PI / 180;
+  const dragEndAngle = dragStartAngle + Math.PI / 2;
+  const dragStart = localPoint(88 + 82 * Math.sin(dragStartAngle) + 32, -82 * Math.cos(dragStartAngle) + 20);
+  const dragEnd = localPoint(88 + 82 * Math.sin(dragEndAngle) + 32, -82 * Math.cos(dragEndAngle) + 20);
   const crankHit = $('#generator-crank-hit');
   const beforeDrag = $('#generator-large-gear').getAttribute('transform');
   crankHit.dispatchEvent(new frame.contentWindow.PointerEvent('pointerdown', {clientX:dragStart.x, clientY:dragStart.y, button:0, pointerId:7, bubbles:true}));

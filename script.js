@@ -363,6 +363,9 @@ const generatorStage = document.querySelector('#generator-stage');
 const generatorFrontRotor = document.querySelector('#generator-front-rotor');
 const generatorAssemblyRotor = document.querySelector('#generator-assembly-rotor');
 const generatorCrank = document.querySelector('#generator-crank');
+const generatorCrankArm = document.querySelector('#generator-crank-arm');
+const generatorCrankSpindle = document.querySelector('#generator-crank-spindle');
+const generatorCrankGrip = document.querySelector('#generator-crank-grip');
 const generatorCrankHit = document.querySelector('#generator-crank-hit');
 const generatorStatus = document.querySelector('#generator-status');
 const generatorHint = document.querySelector('#generator-hint');
@@ -374,6 +377,8 @@ const generatorGearPlane = document.querySelector('#generator-gear-plane');
 const generatorLightning = document.querySelector('#generator-lightning');
 const generatorViewButtons = [...generatorStage.querySelectorAll('[data-generator-view]')];
 const generatorCrankCenter = { x: 88, y: 0 };
+const generatorCrankRadius = 82;
+const generatorCrankGripOffset = { x: 32, y: 20 };
 let generatorAngle = 0, generatorSpeed = 0, generatorDragging = false, generatorPointerAngle = 0, generatorPointerTime = 0;
 let generatorFrame = 0, generatorLastFrame = 0, generatorFrontAngle = 0, generatorLastKeyTurn = 0;
 let generatorMeterTimer = 0, generatorLightningTimer = 0;
@@ -448,7 +453,12 @@ function renderGenerator() {
   generatorAssemblyRotor.setAttribute('transform', 'rotate(' + rotorDegrees + ')');
   document.querySelector('#generator-small-gear').setAttribute('transform', 'rotate(' + (rotorDegrees + 180 / 14) + ')');
   document.querySelector('#generator-large-gear').setAttribute('transform', 'rotate(' + crankDegrees + ' ' + generatorCrankCenter.x + ' ' + generatorCrankCenter.y + ')');
-  generatorCrank.setAttribute('transform', 'rotate(' + crankDegrees + ' ' + generatorCrankCenter.x + ' ' + generatorCrankCenter.y + ')');
+  generatorCrankArm.setAttribute('transform', 'rotate(' + crankDegrees + ' ' + generatorCrankCenter.x + ' ' + generatorCrankCenter.y + ')');
+  const crankX = generatorCrankCenter.x + generatorCrankRadius * Math.sin(generatorAngle);
+  const crankY = -generatorCrankRadius * Math.cos(generatorAngle);
+  generatorCrankSpindle.setAttribute('transform', 'translate(' + crankX.toFixed(2) + ' ' + crankY.toFixed(2) + ')');
+  generatorCrankGrip.setAttribute('transform', 'translate(' + (crankX + generatorCrankGripOffset.x).toFixed(2) + ' ' +
+    (crankY + generatorCrankGripOffset.y).toFixed(2) + ') rotate(32)');
 }
 function animateGenerator(now) {
   generatorFrame = 0;
@@ -504,7 +514,8 @@ function pointerCrankAngle(event) {
   const matrix = generatorGearPlane.getScreenCTM();
   if (!matrix) return null;
   const point = new DOMPoint(event.clientX, event.clientY).matrixTransform(matrix.inverse());
-  return Math.atan2(point.y - generatorCrankCenter.y, point.x - generatorCrankCenter.x);
+  return Math.atan2(point.y - generatorCrankGripOffset.y - generatorCrankCenter.y,
+    point.x - generatorCrankGripOffset.x - generatorCrankCenter.x);
 }
 generatorViewButtons.forEach(button => button.addEventListener('click', () => setGeneratorView(button.dataset.generatorView)));
 generatorCrankHit.addEventListener('pointerdown', event => {
