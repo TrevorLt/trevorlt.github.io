@@ -205,7 +205,7 @@ try {
   await load('../?quota=normal');
   const captions = [...frame.contentDocument.querySelectorAll('.project-caption')].map(item => item.textContent.trim());
   const liveStatus = $('#battlebot-status');
-  check(captions.length === 3 && captions.every((text, i) => text.startsWith(['CAD preview', 'Mechanism illustration', 'App preview'][i])) &&
+  check(captions.length === 2 && captions.every((text, i) => text.startsWith(['CAD preview', 'App preview'][i])) &&
     $('#scan-canvas').getAttribute('aria-label').includes('fixed left sensor') &&
     !frame.contentDocument.querySelector('.battlebot-concept-note,.battlebot-stage-foot') &&
     liveStatus.getAttribute('role') === 'status' && liveStatus.getAttribute('aria-live') === 'polite' && liveStatus.getBoundingClientRect().width <= 1,
@@ -420,12 +420,12 @@ try {
     $('#generator-large-gear .generator-large-gear-path').getAttribute('transform') === 'translate(88 0)' &&
     $('#generator-large-gear circle').getAttribute('cx') === '88' && $('#generator-large-gear circle').getAttribute('cy') === '0' &&
     Boolean($('#generator-stator-face').compareDocumentPosition($('#generator-assembly-bearing')) & Node.DOCUMENT_POSITION_FOLLOWING) &&
-    Boolean($('#generator-assembly-bearing').compareDocumentPosition($('#generator-drive-train')) & Node.DOCUMENT_POSITION_FOLLOWING) &&
-    Boolean($('#generator-drive-train').compareDocumentPosition($('#generator-drive-shaft')) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+    Boolean($('#generator-assembly-bearing').compareDocumentPosition($('#generator-drive-shaft')) & Node.DOCUMENT_POSITION_FOLLOWING) &&
+    Boolean($('#generator-drive-shaft').compareDocumentPosition($('#generator-drive-train')) & Node.DOCUMENT_POSITION_FOLLOWING) &&
     $('#generator-crank-hub').getAttribute('transform') === 'translate(88 0)' &&
     $('#generator-crank-arm').querySelectorAll('path').length === 2 &&
     $('#generator-crank-spindle').querySelectorAll('path').length === 3 && $('#generator-crank-grip').querySelector('ellipse'),
-    'Generator shaft renders over the rotor bearing and pinion, with both crank arm lines grouped for rotation');
+    'Generator shaft sits behind the gears, with both crank arm lines grouped for rotation');
   check(new Set([...frame.contentDocument.querySelectorAll('[id]')].map(node => node.id)).size === frame.contentDocument.querySelectorAll('[id]').length,
     'Generator drivetrain elements have unique IDs');
   check($('#generator-rear-face').getAttribute('cx') === '165' && $('#generator-rear-face').getAttribute('cy') === '225',
