@@ -602,12 +602,13 @@ scheduleGeneratorLightning();
 scheduleGenerator();
 
 const battlebotViewer = document.querySelector('#battlebot-model');
+const battlebotSource = battlebotViewer.getAttribute('src');
 const explodeButton = document.querySelector('#battlebot-explode');
 const drivetrainButton = document.querySelector('#drivetrain-button');
 const battlebotStatus = document.querySelector('#battlebot-status');
 const DRIVETRAIN_RAMP_MS = 1500;
 let animationsReady = false, assemblyExploded = false, assemblyTransition = false, assemblyTarget = false, assemblyReturnFocus = false, drivetrainRunning = false;
-let drivetrainTransition = false, drivetrainRampFrame = 0;
+let drivetrainTransition = false, drivetrainRampFrame = 0, battlebotLoadRetried = false;
 function updateBattleBotControls() {
   explodeButton.disabled = !animationsReady || assemblyTransition || drivetrainRunning || drivetrainTransition;
   drivetrainButton.disabled = !animationsReady || assemblyTransition || assemblyExploded || drivetrainTransition || reduced.matches;
@@ -619,6 +620,20 @@ function failBattleBotPreview() {
   animationsReady = false;
   updateBattleBotControls();
   battlebotStatus.textContent = '3D preview unavailable. Open the Onshape source to inspect the CAD.';
+}
+function retryBattleBotPreview(event) {
+  if (event.detail?.type === 'loadfailure' && !battlebotLoadRetried) {
+    stopDrivetrain();
+    battlebotLoadRetried = true;
+    animationsReady = false;
+    updateBattleBotControls();
+    battlebotStatus.textContent = 'BattleBot preview failed to load. Retrying once…';
+    const retryUrl = new URL(battlebotSource, document.baseURI);
+    retryUrl.searchParams.set('retry', '1');
+    battlebotViewer.src = retryUrl.href;
+    return;
+  }
+  failBattleBotPreview();
 }
 function stopDrivetrain() {
   if (!drivetrainRunning && !drivetrainTransition) return;
@@ -712,11 +727,12 @@ function setDrivetrainRunning(running) {
 explodeButton.addEventListener('click', () => setAssemblyExploded(!assemblyExploded));
 drivetrainButton.addEventListener('click', () => setDrivetrainRunning(!drivetrainRunning));
 battlebotViewer.addEventListener('load', () => {
+  battlebotLoadRetried = false;
   animationsReady = ['Explode', 'Assemble', 'Drivetrain'].every(name => battlebotViewer.availableAnimations.includes(name));
   updateBattleBotControls();
   battlebotStatus.textContent = animationsReady ? 'Model ready. Lift the replaceable armor or run the concept drivetrain.' : 'The model loaded without all preview animations.';
 });
-battlebotViewer.addEventListener('error', failBattleBotPreview);
+battlebotViewer.addEventListener('error', retryBattleBotPreview);
 document.querySelector('#model-viewer-loader').addEventListener('error', failBattleBotPreview, { once: true });
 battlebotViewer.addEventListener('finished', finishAssemblyTransition);
 if (battlebotViewer.availableAnimations?.length) battlebotViewer.dispatchEvent(new Event('load'));

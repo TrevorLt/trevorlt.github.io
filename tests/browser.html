@@ -553,8 +553,8 @@ try {
     /two brushed motors drive the rear wheels/i.test(botDescription),
     'BattleBot description covers replaceable armor, motor size, and rear-wheel drive');
   const battlebot = $('#battlebot-model');
-  check(battlebot.getAttribute('camera-orbit') === '225deg 55deg 90%',
-    'BattleBot opens in the isometric drivetrain view');
+  check(battlebot.getAttribute('camera-orbit') === '225deg 55deg 100%',
+    'BattleBot opens in the isometric drivetrain view with extra framing room');
   check(battlebot.getAttribute('shadow-intensity') === '0', 'BattleBot has no generated ground shadow');
   const explode = $('#battlebot-explode');
   const drive = $('#drivetrain-button');
@@ -652,8 +652,11 @@ try {
     'Exploded view moves the four source wheels evenly toward both sides');
   const armorNode = nodeIndex('Replaceable armor motion');
   const armorLift = explodeClip.channels.find(channel => channel.target.node === armorNode && channel.target.path === 'translation');
-  check(armorLift && Math.abs(endpoint(explodeClip, armorLift, 1)[1] - .09) < 1e-6,
-    'Exploded view visibly lifts the replaceable armor shell');
+  const coverNode = nodeIndex('Cover motion');
+  const coverLift = explodeClip.channels.find(channel => channel.target.node === coverNode && channel.target.path === 'translation');
+  check(armorLift && Math.abs(endpoint(explodeClip, armorLift, 1)[1] - .045) < 1e-6 &&
+    coverLift && Math.abs(endpoint(explodeClip, coverLift, 1)[1] - .08) < 1e-6,
+    'Exploded view keeps the replaceable armor shell and cover lifts within frame');
   const explodeTranslations = new Map(explodeClip.channels.filter(channel => channel.target.path === 'translation')
     .map(channel => [`${channel.target.node}:${channel.target.path}`, channel]));
   const assembleTranslations = new Map(assembleClip.channels.filter(channel => channel.target.path === 'translation')
@@ -743,6 +746,14 @@ try {
   }
   check(explode.getAttribute('aria-pressed') === 'false' && (framePrefersReducedMotion ? drive.disabled : !drive.disabled),
     'Reassembling restores both BattleBot controls');
+  battlebot.setAttribute('src', 'assets/__codex-intentional-missing-model.glb');
+  await until(() => battlebot.src.includes('retry=1') ||
+    $('#battlebot-status').textContent.startsWith('3D preview unavailable'));
+  await until(() => $('#battlebot-status').textContent.startsWith('Model ready.') ||
+    $('#battlebot-status').textContent.startsWith('3D preview unavailable'));
+  check($('#battlebot-status').textContent.startsWith('Model ready.') && battlebot.loaded &&
+    new URL(battlebot.src).searchParams.get('retry') === '1' && !explode.disabled,
+    'BattleBot recovers from a failed GLB request with one cache-busted retry');
   $('#model-viewer-loader').dispatchEvent(new Event('error'));
   check($('#battlebot-status').textContent.startsWith('3D preview unavailable') && explode.disabled && drive.disabled,
     'A failed model-viewer download leaves a clear source fallback');
