@@ -621,13 +621,13 @@ try {
     Math.abs(motorAxis.translation[1] - .023) < 1e-6 && Math.abs(motorAxis.translation[2] - (-.0299197044)) < 1e-6 &&
     motorAxis.children.includes(motorPulleyIndex) &&
     Math.abs(model.nodes[motorPulleyIndex].translation[0]) < 1e-6 &&
-    Math.abs(model.nodes[motorPulleyIndex].translation[1] + .008) < 1e-6 &&
+    Math.abs(model.nodes[motorPulleyIndex].translation[1] + .005) < 1e-6 &&
     Math.abs(model.nodes[motorPulleyIndex].translation[2]) < 1e-6 &&
-    Math.abs(model.nodes[motorHubIndex].translation[1] + .008) < 1e-6 &&
-    Math.abs(model.nodes[weaponPulleyIndex].translation[1] + .008) < 1e-6 &&
+    Math.abs(model.nodes[motorHubIndex].translation[1] + .005) < 1e-6 &&
+    Math.abs(model.nodes[weaponPulleyIndex].translation[1] + .005) < 1e-6 &&
     Math.abs(model.nodes[weaponHubIndex].translation[1] - model.nodes[weaponPulleyIndex].translation[1] - .004) < 1e-6 &&
     model.nodes[weaponAxisIndex].children.includes(weaponPulleyIndex),
-    'Motor shaft points through the upright cross mount and both pulleys share the outboard plane');
+    'Both pulleys and their hubs share a close outboard plane');
   const beltLinks = model.nodes.filter(node => /^Timing belt link /.test(node.name || ''));
   const weaponOccurrence = model.nodes[weaponAxis.children.find(index => model.nodes[index].name === 'occurrence of Part 1')];
   const weaponMeshNode = model.nodes[weaponOccurrence.children.find(index => model.nodes[index].mesh !== undefined)];
@@ -638,9 +638,10 @@ try {
   const pulleyMaxX = Math.max(
     motorAxis.translation[0] + model.nodes[motorPulleyIndex].translation[1] + primitiveBounds(model.nodes[motorPulleyIndex]).max[1],
     weaponAxis.translation[0] + model.nodes[weaponPulleyIndex].translation[1] + primitiveBounds(model.nodes[weaponPulleyIndex]).max[1]);
-  check(weaponMinX - Math.max(beltMaxX, pulleyMaxX) >= .003 && beltLinks.every(node =>
-    Math.abs(node.translation[0] - (motorAxis.translation[0] - .008)) < 1e-6),
-    'Timing belt and pulleys clear the weapon by at least 3 mm');
+  const weaponClearance = weaponMinX - Math.max(beltMaxX, pulleyMaxX);
+  check(weaponClearance >= .0015 && weaponClearance <= .0025 && beltLinks.every(node =>
+    Math.abs(node.translation[0] - (motorAxis.translation[0] - .005)) < 1e-6),
+    'Timing belt and pulleys keep a small clear gap from the weapon');
   const motorShaft = model.nodes[nodeIndex('2206 motor shaft')];
   const motorBell = model.nodes[nodeIndex('2206 motor bell')];
   const motorShaftBounds = primitiveBounds(motorShaft);
@@ -680,6 +681,18 @@ try {
   const explodeClip = model.animations.find(animation => animation.name === 'Explode');
   const assembleClip = model.animations.find(animation => animation.name === 'Assemble');
   const driveClip = model.animations.find(animation => animation.name === 'Drivetrain');
+  check(beltLinks.length === 32 && beltLinks.every(node => {
+    const nodeIndex = model.nodes.indexOf(node);
+    const channel = driveClip.channels.find(item => item.target.node === nodeIndex && item.target.path === 'translation');
+    if (!channel) return false;
+    const sampler = driveClip.samplers[channel.sampler];
+    const accessor = model.accessors[sampler.output];
+    const view = model.bufferViews[accessor.bufferView];
+    const offset = binStart + (view.byteOffset || 0) + (accessor.byteOffset || 0);
+    return sampler.interpolation === 'LINEAR' && accessor.type === 'VEC3' &&
+      Array.from({length:accessor.count}, (_,index) => header.getFloat32(offset + index * 12, true))
+        .every(x => Math.abs(x - node.translation[0]) < 1e-6);
+  }), 'Drivetrain animation keeps every belt link in the new pulley plane');
   const sameVector = (a, b) => a.every((value, index) => Math.abs(value - b[index]) < 1e-6);
   const wheelOffsets = nativeWheelNodes.map(node => {
     const channel = explodeClip.channels.find(item => item.target.node === node && item.target.path === 'translation');
@@ -692,6 +705,15 @@ try {
   const armorLift = explodeClip.channels.find(channel => channel.target.node === armorNode && channel.target.path === 'translation');
   const coverNode = nodeIndex('Cover motion');
   const coverLift = explodeClip.channels.find(channel => channel.target.node === coverNode && channel.target.path === 'translation');
+  const bodyMotionNode = nodeIndex('Main body motion');
+  const bodyMotion = model.nodes[bodyMotionNode];
+  const bodyOccurrence = model.nodes[bodyMotion.children.find(index => model.nodes[index].name === 'occurrence of Main Body')];
+  const bodyDrop = explodeClip.channels.find(channel => channel.target.node === bodyMotionNode && channel.target.path === 'translation');
+  check(bodyDrop && Math.abs(endpoint(explodeClip, bodyDrop, 1)[1] + .035) < 1e-6 &&
+    nativeWheelNodes.every(index => bodyOccurrence.children.includes(index)) &&
+    wheelOffsets.every(offset => Math.abs(offset[1]) < 1e-6) &&
+    endpoint(explodeClip, coverLift, 1)[1] >= Math.abs(endpoint(explodeClip, bodyDrop, 1)[1]),
+    'Exploded view keeps wheel drop within the upper cover lift');
   check(armorLift && Math.abs(endpoint(explodeClip, armorLift, 1)[1] - .025) < 1e-6 &&
     coverLift && Math.abs(endpoint(explodeClip, coverLift, 1)[1] - .045) < 1e-6,
     'Exploded view keeps the replaceable armor shell and cover close to the body');
