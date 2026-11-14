@@ -597,8 +597,10 @@ try {
     '2206 cross base sits flush on the upright plate and screws match its four CAD holes');
   const localYAxis = ([x,y,z,w]) => [2*(x*y-z*w),1-2*(x*x+z*z),2*(y*z+x*w)];
   const motorPulleyIndex = nodeIndex('Brushless motor timing pulley');
+  const motorHubIndex = nodeIndex('Brushless motor pulley hub');
   const weaponAxisIndex = nodeIndex('Weapon shaft axis');
   const weaponPulleyIndex = nodeIndex('Weapon pulley');
+  const weaponHubIndex = nodeIndex('Weapon pulley hub');
   const bodyNode = model.nodes.find(node => node.name === 'Main Body');
   const bodyXBounds = model.meshes[bodyNode.mesh].primitives
     .map(primitive => model.accessors[primitive.attributes.POSITION]);
@@ -618,9 +620,45 @@ try {
     Math.abs(motorAxis.translation[0] - model.nodes[weaponAxisIndex].translation[0]) < 1e-6 &&
     Math.abs(motorAxis.translation[1] - .023) < 1e-6 && Math.abs(motorAxis.translation[2] - (-.0299197044)) < 1e-6 &&
     motorAxis.children.includes(motorPulleyIndex) &&
-    model.nodes[motorPulleyIndex].translation.every(value => Math.abs(value) < 1e-6) &&
+    Math.abs(model.nodes[motorPulleyIndex].translation[0]) < 1e-6 &&
+    Math.abs(model.nodes[motorPulleyIndex].translation[1] + .008) < 1e-6 &&
+    Math.abs(model.nodes[motorPulleyIndex].translation[2]) < 1e-6 &&
+    Math.abs(model.nodes[motorHubIndex].translation[1] + .008) < 1e-6 &&
+    Math.abs(model.nodes[weaponPulleyIndex].translation[1] + .008) < 1e-6 &&
+    Math.abs(model.nodes[weaponHubIndex].translation[1] - model.nodes[weaponPulleyIndex].translation[1] - .004) < 1e-6 &&
     model.nodes[weaponAxisIndex].children.includes(weaponPulleyIndex),
-    'Motor shaft points through the upright cross mount and shares the weapon pulley plane');
+    'Motor shaft points through the upright cross mount and both pulleys share the outboard plane');
+  const beltLinks = model.nodes.filter(node => /^Timing belt link /.test(node.name || ''));
+  const weaponOccurrence = model.nodes[weaponAxis.children.find(index => model.nodes[index].name === 'occurrence of Part 1')];
+  const weaponMeshNode = model.nodes[weaponOccurrence.children.find(index => model.nodes[index].mesh !== undefined)];
+  const weaponMinX = weaponAxis.translation[0] + Math.min(...model.meshes[weaponMeshNode.mesh].primitives
+    .map(primitive => model.accessors[primitive.attributes.POSITION].min[1]));
+  const beltMaxX = Math.max(...beltLinks.map(node => node.translation[0] + Math.max(...model.meshes[node.mesh].primitives
+    .map(primitive => model.accessors[primitive.attributes.POSITION].max[0]))));
+  const pulleyMaxX = Math.max(
+    motorAxis.translation[0] + model.nodes[motorPulleyIndex].translation[1] + primitiveBounds(model.nodes[motorPulleyIndex]).max[1],
+    weaponAxis.translation[0] + model.nodes[weaponPulleyIndex].translation[1] + primitiveBounds(model.nodes[weaponPulleyIndex]).max[1]);
+  check(weaponMinX - Math.max(beltMaxX, pulleyMaxX) >= .003 && beltLinks.every(node =>
+    Math.abs(node.translation[0] - (motorAxis.translation[0] - .008)) < 1e-6),
+    'Timing belt and pulleys clear the weapon by at least 3 mm');
+  const motorShaft = model.nodes[nodeIndex('2206 motor shaft')];
+  const motorBell = model.nodes[nodeIndex('2206 motor bell')];
+  const motorShaftBounds = primitiveBounds(motorShaft);
+  const motorBellBounds = primitiveBounds(motorBell);
+  const pulleyBounds = primitiveBounds(model.nodes[motorPulleyIndex]);
+  const motorShaftScale = motorShaft.scale?.[1] || 1;
+  const motorBellScale = motorBell.scale?.[1] || 1;
+  const motorPulleyCenterX = motorAxis.translation[0] + model.nodes[motorPulleyIndex].translation[1];
+  const motorShaftMinX = motorAxis.translation[0] + motorShaft.translation[1] + motorShaftBounds.min[1] * motorShaftScale;
+  const motorShaftMaxX = motorAxis.translation[0] + motorShaft.translation[1] + motorShaftBounds.max[1] * motorShaftScale;
+  const motorBellMinX = motorAxis.translation[0] + motorBell.translation[1] + motorBellBounds.min[1] * motorBellScale;
+  const motorBellMaxX = motorAxis.translation[0] + motorBell.translation[1] + motorBellBounds.max[1] * motorBellScale;
+  check(Math.abs((motorShaftBounds.max[1] - motorShaftBounds.min[1]) * motorShaftScale - .021) < 1e-6 &&
+    Math.abs((motorBellBounds.max[1] - motorBellBounds.min[1]) * motorBellScale - .018) < 1e-6 &&
+    motorShaftMinX <= motorPulleyCenterX + pulleyBounds.min[1] &&
+    motorShaftMaxX >= motorPulleyCenterX + pulleyBounds.max[1] &&
+    motorShaftMaxX > motorBellMinX && motorShaftMinX < motorBellMaxX,
+    'Longer motor housing and shaft stay joined to the outboard pulley');
   const rearMotors = model.nodes.filter(node => /^(Left|Right) rear brushed motor$/.test(node.name || ''));
   const rearShafts = model.nodes.filter(node => /^(Left|Right) rear wheel drive shaft$/.test(node.name || ''));
   const rearSpins = model.nodes.filter(node => /^Rear wheel spin /.test(node.name || ''));
@@ -629,7 +667,7 @@ try {
   check(!model.nodes.some(node => /bevel|countershaft/i.test(node.name || '')) &&
     model.nodes.some(node => node.name === 'Brushless motor timing pulley') &&
     model.nodes.some(node => node.name === 'Weapon pulley') &&
-    model.nodes.filter(node => /^Timing belt link /.test(node.name || '')).length === 32,
+    beltLinks.length === 32,
     'Brushless motor drives the weapon directly with a shared-plane timing belt');
   function endpoint(animation, channel, key) {
     const sampler = animation.samplers[channel.sampler];
@@ -654,9 +692,9 @@ try {
   const armorLift = explodeClip.channels.find(channel => channel.target.node === armorNode && channel.target.path === 'translation');
   const coverNode = nodeIndex('Cover motion');
   const coverLift = explodeClip.channels.find(channel => channel.target.node === coverNode && channel.target.path === 'translation');
-  check(armorLift && Math.abs(endpoint(explodeClip, armorLift, 1)[1] - .045) < 1e-6 &&
-    coverLift && Math.abs(endpoint(explodeClip, coverLift, 1)[1] - .08) < 1e-6,
-    'Exploded view keeps the replaceable armor shell and cover lifts within frame');
+  check(armorLift && Math.abs(endpoint(explodeClip, armorLift, 1)[1] - .025) < 1e-6 &&
+    coverLift && Math.abs(endpoint(explodeClip, coverLift, 1)[1] - .045) < 1e-6,
+    'Exploded view keeps the replaceable armor shell and cover close to the body');
   const explodeTranslations = new Map(explodeClip.channels.filter(channel => channel.target.path === 'translation')
     .map(channel => [`${channel.target.node}:${channel.target.path}`, channel]));
   const assembleTranslations = new Map(assembleClip.channels.filter(channel => channel.target.path === 'translation')
