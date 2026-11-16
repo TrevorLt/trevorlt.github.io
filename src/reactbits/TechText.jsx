@@ -317,6 +317,15 @@ const TechText = ({
       return bestDistance < 28 ? best : -1;
     };
 
+    const keepGlyphInBounds = glyph => {
+      const x = Math.min(width - 6 - glyph.box.x2, Math.max(6 - glyph.box.x1, glyph.offset.x));
+      const y = Math.min(height - 6 - glyph.box.y2, Math.max(22 - glyph.box.y1, glyph.offset.y));
+      if (x !== glyph.offset.x) glyph.velocity.x = 0;
+      if (y !== glyph.offset.y) glyph.velocity.y = 0;
+      glyph.offset.x = x;
+      glyph.offset.y = y;
+    };
+
     const falloff = (target, cx, cy, radius, strength, softness) => {
       const inner = Math.min(1, Math.max(0, 1 - softness));
       const gradient = target.createRadialGradient(cx, cy, 0, cx, cy, radius);
@@ -502,15 +511,8 @@ const TechText = ({
       const labelWidth = metrics.width;
       const glyphCenter = (glyph.box.x1 + glyph.box.x2) / 2 + glyph.offset.x;
       const labelX = Math.max(labelWidth / 2 + 2, Math.min(width - labelWidth / 2 - 2, glyphCenter));
-      const labelY = Math.max(10, Math.round(word.top) - 9);
-      const clearLeft = Math.max(0, labelX - labelWidth / 2 - 2);
-      const clearTop = Math.max(0, labelY - metrics.actualBoundingBoxAscent - 2);
-      ctx.clearRect(
-        clearLeft,
-        clearTop,
-        Math.min(width, labelX + labelWidth / 2 + 2) - clearLeft,
-        Math.min(height, labelY + 2) - clearTop
-      );
+      const rowTop = Math.min(glyph.box.y1 + glyph.offset.y, ...glyphs.filter(item => item.shown > 0.001).map(item => item.box.y1 + item.offset.y));
+      const labelY = Math.max(10, Math.round(rowTop) - 10);
       ctx.globalAlpha = a;
       ctx.fillText(label, labelX, labelY);
       ctx.globalAlpha = 1;
@@ -739,8 +741,8 @@ const TechText = ({
       let moving = false;
       glyphs.forEach((glyph, i) => {
         if (i === dragging) {
-          glyph.offset.x = approach(glyph.offset.x, pointer.x - grab.x, dt, 0.03);
-          glyph.offset.y = approach(glyph.offset.y, pointer.y - grab.y, dt, 0.03);
+          glyph.offset.x = approach(glyph.offset.x, Math.min(width - 6 - glyph.box.x2, Math.max(6 - glyph.box.x1, pointer.x - grab.x)), dt, 0.03);
+          glyph.offset.y = approach(glyph.offset.y, Math.min(height - 6 - glyph.box.y2, Math.max(22 - glyph.box.y1, pointer.y - grab.y)), dt, 0.03);
           glyph.velocity.x = 0;
           glyph.velocity.y = 0;
           moving = true;
@@ -758,6 +760,7 @@ const TechText = ({
         velocity.y += (-SPRING * offset.y - damping * velocity.y) * dt;
         offset.x += velocity.x * dt;
         offset.y += velocity.y * dt;
+        keepGlyphInBounds(glyph);
         moving = true;
       });
 
@@ -893,9 +896,13 @@ const TechText = ({
       }
       width = Math.max(1, container.clientWidth);
       height = Math.max(1, container.clientHeight);
-      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      dpr = window.devicePixelRatio || 1;
       canvas.width = Math.round(width * dpr);
       canvas.height = Math.round(height * dpr);
+      const bounds = container.getBoundingClientRect();
+      canvas.style.width = `${canvas.width / dpr}px`;
+      canvas.style.height = `${canvas.height / dpr}px`;
+      canvas.style.transform = `translate(${Math.round(bounds.left * dpr) / dpr - bounds.left}px, ${Math.round(bounds.top * dpr) / dpr - bounds.top}px)`;
       layoutKey = '';
       wake();
     };
