@@ -47,6 +47,8 @@ try {
     frame.contentWindow.eval('scanObjectCloud.filter(point => point.captureTime <= scanProgress).length') === 0,
     'Scanner always opens at the left with no captured points');
   await load();
+  check($('#demo-status').textContent === 'Two windows. One glance.',
+    'Default quota status matches the initial page copy');
   const scanSlider = $('#sweep');
   check($('.scanner-stage .stage-top').textContent.trim() === '0% scanned' &&
     getComputedStyle($('.scanner-stage .stage-top')).justifyContent === 'flex-end',
@@ -93,14 +95,16 @@ try {
   check(greenScanPixels() < fullScanPixels - 300, 'Dragging backward clears the later scanned points');
   const lowQuotaButton = $('[data-quota="low"]');
   lowQuotaButton.click();
-  check(lowQuotaButton.getAttribute('aria-pressed') === 'true',
-    'Low quota selection responds before its reading finishes animating');
+  check(lowQuotaButton.getAttribute('aria-pressed') === 'true'
+    && $('#demo-status').textContent === 'A warning appears below 20%.',
+    'Low quota selection immediately shows its warning guidance');
   await until(() => $('#readout-five-hour').textContent === '12%');
   $('[data-quota="stale"]').click();
   const frozen = $('#readout-five-hour').textContent;
   const weekly = $('#readout-weekly').textContent;
   const shared = frame.contentWindow.location.href;
-  check(frozen === '~12%', 'Last known freezes the low reading');
+  check(frozen === '~12%' && $('#demo-status').textContent === 'Last-known values stay visible.',
+    'Last known freezes the low reading and explains data freshness');
   sameReadings();
   await load(shared);
   check($('#readout-five-hour').textContent === frozen, 'Reload preserves the frozen reading');
@@ -205,7 +209,8 @@ try {
   await load('../?quota=normal');
   const captions = [...frame.contentDocument.querySelectorAll('.project-caption')].map(item => item.textContent.trim());
   const liveStatus = $('#battlebot-status');
-  check(captions.length === 2 && captions.every((text, i) => text.startsWith(['CAD preview', 'App preview'][i])) &&
+  check(captions.length === 0 && !frame.contentDocument.body.textContent.includes('CAD preview of armor removal and drivetrain motion.') &&
+    !frame.contentDocument.body.textContent.includes('App preview with sample quota values.') &&
     $('#scan-canvas').getAttribute('aria-label').includes('fixed left sensor') &&
     !frame.contentDocument.querySelector('.battlebot-concept-note,.battlebot-stage-foot') &&
     liveStatus.getAttribute('role') === 'status' && liveStatus.getAttribute('aria-live') === 'polite' && liveStatus.getBoundingClientRect().width <= 1,
@@ -229,6 +234,14 @@ try {
   check(headings.length === 8 && headings.every(heading => heading.classList.contains('visually-hidden') || heading.querySelector('.visually-hidden')) &&
     techHosts.length === 9 && techHosts.every(host => host.querySelector('.tech-text-canvas')),
     'ReactBits mounts on the hero, section, and project headings while keeping semantic heading text');
+  check(techHosts.every(host => {
+    const canvas = host.querySelector('canvas');
+    const bounds = canvas.getBoundingClientRect();
+    const dpr = frame.contentWindow.devicePixelRatio;
+    return Math.abs(canvas.width - bounds.width * dpr) < .01 && Math.abs(canvas.height - bounds.height * dpr) < .01 &&
+      Math.abs(bounds.left * dpr - Math.round(bounds.left * dpr)) < .01 &&
+      Math.abs(bounds.top * dpr - Math.round(bounds.top * dpr)) < .01;
+  }), 'TechText canvases draw at exact device-pixel size and alignment');
   const heroTextHosts = [...techRoot.querySelectorAll('.tech-heading-mount')];
   const heroBounds = techRoot.getBoundingClientRect();
   const heroCopyBounds = frame.contentDocument.querySelector('.hero-copy').getBoundingClientRect();
@@ -239,6 +252,14 @@ try {
     return canvasBounds.top >= hostBounds.top - 1 && canvasBounds.bottom <= hostBounds.bottom + 1;
   }) && heroBounds.bottom <= heroCopyBounds.top && heroCopyBounds.bottom <= heroFootBounds.top,
   'Hero title canvases stay within their rows without overlapping the intro or footer');
+  check(heroTextHosts.every(host => {
+    const canvas = host.querySelector('canvas');
+    const context = frame.contentDocument.createElement('canvas').getContext('2d');
+    const style = getComputedStyle(host);
+    context.font = `${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
+    const metrics = context.measureText(host.dataset.techText);
+    return (canvas.clientHeight - metrics.actualBoundingBoxAscent - metrics.actualBoundingBoxDescent) / 2 >= 18;
+  }), 'Hero rows reserve a separate label band above each name line');
   const heroFont = Number.parseFloat(getComputedStyle(techRoot).fontSize);
   const viewportWidth = frame.contentWindow.innerWidth;
   const originalHeroFont = viewportWidth <= 600 ? viewportWidth * 0.29 : viewportWidth <= 900 ? viewportWidth * 0.22
@@ -297,7 +318,7 @@ try {
       const metrics = this.measureText(String(text));
       smallLabels.push({text:String(text), x, y, align:this.textAlign, width:metrics.width,
         ascent:metrics.actualBoundingBoxAscent, descent:metrics.actualBoundingBoxDescent,
-        letterSpacing:this.letterSpacing, wordSpacing:this.wordSpacing, clearsBefore:smallClearRects.length});
+        letterSpacing:this.letterSpacing, wordSpacing:this.wordSpacing});
       return smallFillText.call(this, text, x, y, ...args);
     };
     smallContext.fillRect = function(...args) { smallParticles++; return smallFillRect.apply(this, args); };
@@ -315,9 +336,8 @@ try {
       : pixelLabel.align === 'right' ? pixelLabel.x - pixelLabel.width : pixelLabel.x;
     const labelTop = pixelLabel.y - pixelLabel.ascent;
     const labelBottom = pixelLabel.y;
-    const labelCleared = smallClearRects.slice(0, pixelLabel.clearsBefore).some(([x, y, width, height]) =>
-      width < smallCanvas.width && height < 24 && x <= labelLeft && x + width >= labelLeft + pixelLabel.width &&
-      y <= labelTop && y + height >= labelBottom);
+    const noPartialErase = smallClearRects.every(([x, y, width, height]) =>
+      x <= 0 && y <= 0 && x + width >= smallCanvas.width && y + height >= smallCanvas.height);
     const mountStyle = getComputedStyle(smallTech.closest('.tech-heading-mount'));
     const probe = frame.contentDocument.createElement('canvas').getContext('2d');
     probe.font = `${mountStyle.fontWeight} ${mountStyle.fontSize} ${mountStyle.fontFamily}`;
@@ -327,7 +347,7 @@ try {
     clearHoverReadout = clearHoverReadout && pixelLabel.align === 'center' &&
       labelLeft >= 0 && labelLeft + pixelLabel.width <= smallCanvas.clientWidth &&
       pixelLabel.y >= 10 && pixelLabel.y <= inkTop - 7 && pixelLabel.letterSpacing === '0px' &&
-      pixelLabel.wordSpacing === '0px' && pixelLabel.width >= pixelLabel.text.length * 4 && labelCleared;
+      labelTop >= 0 && pixelLabel.wordSpacing === '0px' && pixelLabel.width >= pixelLabel.text.length * 4 && noPartialErase;
     titlePixels = titlePixels && smallParticles > 0;
     smallTech.dispatchEvent(new frame.contentWindow.PointerEvent('pointerleave', {pointerType:'mouse'}));
     smallContext.fillText = smallFillText;
@@ -335,7 +355,7 @@ try {
     smallContext.clearRect = smallClearRect;
   }
   check(smallTitlesStayStill, 'Small headings stay still until hovered');
-  check(clearHoverReadout, 'BattleBot, generator and scanner pixel dimensions sit above each word');
+  check(clearHoverReadout, 'TechText readouts stay above the word without erasing canvas pixels');
   check(titlePixels, 'All three project headings keep the pixel particles on hover');
   const projects = [...frame.contentDocument.querySelectorAll('.project')];
   const desktopProjects = frame.contentWindow.innerWidth > 600;
@@ -461,8 +481,14 @@ try {
   check(generatorReducedMotion || (frame.contentWindow.getComputedStyle($('.generator-front-rotor-transition')).animationName === 'generator-rotor-collapse' &&
     frame.contentWindow.getComputedStyle($('#generator-drive-train')).transitionDelay.split(',')[0] === '0.58s'),
     'Full assembly choreographs the spinning rotor before the drivetrain appears');
-  check($('#generator-hint').textContent === 'drag the handle to generate electricity or press Enter',
-    'Full assembly view uses the short handle and Enter instruction');
+  const coarsePointer = frame.contentWindow.matchMedia('(any-pointer: coarse)').matches;
+  check($('#generator-hint').textContent === (coarsePointer ? 'Drag the handle to generate electricity.' : 'Drag the handle to generate electricity or press Enter.'),
+    'Generator instructions match the active input method');
+  const crankHitBounds = $('#generator-crank-hit').getBoundingClientRect();
+  check(frame.contentWindow.getComputedStyle($('#generator-crank-hit')).touchAction === 'none' &&
+    frame.contentWindow.getComputedStyle($('#generator-crank')).touchAction !== 'none' &&
+    (!coarsePointer || (crankHitBounds.width >= 44 && crankHitBounds.height >= 44)),
+    'Touch dragging is confined to a 44px handle target');
   $('#generator-crank').focus();
   const crankFocus = frame.contentWindow.getComputedStyle($('#generator-crank'));
   check(crankFocus.boxShadow === 'none' && (crankFocus.outlineStyle === 'none' ||
@@ -478,6 +504,8 @@ try {
   check(voltage.textContent === '3.26 V' && $('#generator-frequency').textContent === '30.0 Hz',
     'Repeated Enter acceleration is bounded at 30 crank Hz');
   $('[data-generator-view="rotor"]').click();
+  check(coarsePointer ? !$('#generator-status').textContent.includes('Press V') : $('#generator-status').textContent.includes('Press V'),
+    'Rotor status matches touch or keyboard input');
   $('[data-generator-view="assembly"]').click();
   const initialVoltageGraph = $('#generator-voltage-line').getAttribute('d');
   const voltageUpdates = [];

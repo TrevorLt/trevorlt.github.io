@@ -270,8 +270,8 @@ function setQuota(state, sync = true, recharge = false) {
   const startValue = quotaValue, startWeekly = quotaWeeklyValue;
   renderQuota(startValue, startWeekly);
   quotaUI.status.textContent = recharge ? 'Recharging both usage windows.' : state === 'low'
-    ? '12% remains in the 5-hour window. A warning appears below 20%.'
-    : state === 'stale' ? 'Last-known values stay visible when a refresh fails.' : 'Two windows. One glance.';
+    ? 'A warning appears below 20%.'
+    : state === 'stale' ? 'Last-known values stay visible.' : 'Two windows. One glance.';
   for (const button of quotaButtons) button.setAttribute('aria-pressed', String(button.dataset.quota === state));
   if (sync) {
     updateURL('quota', state);
@@ -376,13 +376,22 @@ const generatorMeter = document.querySelector('.generator-meter');
 const generatorGearPlane = document.querySelector('#generator-gear-plane');
 const generatorLightning = document.querySelector('#generator-lightning');
 const generatorViewButtons = [...generatorStage.querySelectorAll('[data-generator-view]')];
+const generatorCoarsePointer = window.matchMedia('(any-pointer: coarse)');
 const generatorCrankCenter = { x: 88, y: 0 };
 const generatorCrankRadius = 82;
 const generatorCrankGripOffset = { x: 32, y: 20 };
-let generatorAngle = 0, generatorSpeed = 0, generatorDragging = false, generatorPointerAngle = 0, generatorPointerTime = 0;
+let generatorAngle = 0, generatorSpeed = 0, generatorDragging = false, generatorPointerAngle = 0, generatorPointerTime = 0, generatorPointerId = null;
 let generatorFrame = 0, generatorLastFrame = 0, generatorFrontAngle = 0, generatorLastKeyTurn = 0;
 let generatorMeterTimer = 0, generatorLightningTimer = 0;
 const maxCrankSpeed = 30 * Math.PI * 2;
+function updateGeneratorCopy(view = generatorStage.dataset.view) {
+  const touch = generatorCoarsePointer.matches;
+  generatorHint.textContent = view === 'assembly'
+    ? touch ? 'Drag the handle to generate electricity.' : 'Drag the handle to generate electricity or press Enter.'
+    : touch ? 'Choose Full assembly to reveal the gears and hand crank.' : 'Press Full assembly or V to reveal the gears and hand crank.';
+  generatorStatus.textContent = view === 'assembly' ? 'Full assembly view. Turn the crank to update the estimated output voltage.'
+    : touch ? 'Rotor view. Choose Full assembly to reveal the drivetrain.' : 'Rotor view. Press V or choose Full assembly to reveal the drivetrain.';
+}
 function pulseGeneratorLightning() {
   if (reduced.matches || generatorStage.dataset.view !== 'rotor' || document.hidden) return;
   const coils = document.querySelectorAll('#generator-front-coils use');
@@ -498,15 +507,14 @@ function setGeneratorView(view) {
   const assembly = document.querySelector('#generator-assembly-view');
   assembly.setAttribute('aria-hidden', String(view !== 'assembly'));
   generatorCrank.setAttribute('tabindex', view === 'assembly' ? '0' : '-1');
-  generatorHint.textContent = view === 'assembly'
-    ? 'drag the handle to generate electricity or press Enter'
-    : 'Press Full assembly or V to reveal the gears and hand crank.';
+  updateGeneratorCopy(view);
   if (view === 'rotor') {
+    try { if (generatorPointerId !== null) generatorCrankHit.releasePointerCapture(generatorPointerId); } catch {}
+    generatorPointerId = null;
     generatorDragging = false;
     generatorSpeed = 0;
     if (crankHadFocus) generatorViewButtons.find(button => button.dataset.generatorView === 'rotor').focus();
   }
-  generatorStatus.textContent = view === 'assembly' ? 'Full assembly view. Turn the crank to update the estimated output voltage.' : 'Rotor view. Press V or choose Full assembly to reveal the drivetrain.';
   renderGenerator();
   scheduleGenerator();
 }
@@ -519,10 +527,11 @@ function pointerCrankAngle(event) {
 }
 generatorViewButtons.forEach(button => button.addEventListener('click', () => setGeneratorView(button.dataset.generatorView)));
 generatorCrankHit.addEventListener('pointerdown', event => {
-  if (generatorStage.dataset.view !== 'assembly' || event.button !== 0) return;
+  if (generatorStage.dataset.view !== 'assembly' || event.button !== 0 || generatorDragging) return;
   const angle = pointerCrankAngle(event);
   if (angle === null) return;
   generatorDragging = true;
+  generatorPointerId = event.pointerId;
   generatorPointerAngle = angle;
   generatorPointerTime = performance.now();
   generatorSpeed = 0;
@@ -532,7 +541,7 @@ generatorCrankHit.addEventListener('pointerdown', event => {
   scheduleGenerator();
 });
 generatorCrankHit.addEventListener('pointermove', event => {
-  if (!generatorDragging) return;
+  if (!generatorDragging || event.pointerId !== generatorPointerId) return;
   const angle = pointerCrankAngle(event);
   if (angle === null) return;
   const now = performance.now();
@@ -544,13 +553,15 @@ generatorCrankHit.addEventListener('pointermove', event => {
   generatorPointerTime = now;
   scheduleGenerator();
 });
-function releaseGeneratorPointer() {
-  if (!generatorDragging) return;
+function releaseGeneratorPointer(event) {
+  if (!generatorDragging || event.pointerId !== generatorPointerId) return;
   generatorDragging = false;
+  generatorPointerId = null;
   scheduleGenerator();
 }
 generatorCrankHit.addEventListener('pointerup', releaseGeneratorPointer);
 generatorCrankHit.addEventListener('pointercancel', releaseGeneratorPointer);
+generatorCrankHit.addEventListener('lostpointercapture', releaseGeneratorPointer);
 generatorCrank.addEventListener('keydown', event => {
   if (event.repeat) return;
   if (event.key === 'Enter') {
@@ -595,6 +606,8 @@ document.addEventListener('visibilitychange', () => {
   scheduleGeneratorMeter();
 });
 generatorCrank.setAttribute('tabindex', '-1');
+updateGeneratorCopy();
+generatorCoarsePointer.addEventListener('change', () => updateGeneratorCopy());
 document.querySelector('#generator-rotor-view').setAttribute('aria-hidden', 'false');
 renderGenerator();
 updateGeneratorVoltage();
