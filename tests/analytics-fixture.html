@@ -1,0 +1,37 @@
+<!doctype html>
+<meta charset="utf-8">
+<meta name="ga4-measurement-id" content="G-TEST123456">
+<title>Analytics fixture</title>
+<script>
+const appendHeadChild = HTMLHeadElement.prototype.appendChild;
+window.__gaTagRequests = [];
+HTMLHeadElement.prototype.appendChild = function(node) {
+  if (node instanceof HTMLScriptElement && node.src.startsWith('https://www.googletagmanager.com/gtag/js')) {
+    window.__gaTagRequests.push(node.src);
+    return node;
+  }
+  return appendHeadChild.call(this, node);
+};
+Object.defineProperty(document, 'visibilityState', { configurable: true, value: 'visible' });
+window.IntersectionObserver = class {
+  constructor(callback) { this.callback = callback; }
+  observe(target) {
+    queueMicrotask(() => this.callback([{ target, isIntersecting: true, intersectionRatio: 1 }]));
+  }
+  disconnect() {}
+};
+try {
+  if (new URLSearchParams(location.search).has('reset')) localStorage.removeItem('portfolio-analytics-consent:G-TEST123456');
+} catch {}
+</script>
+<script src="../analytics.js" defer></script>
+<main>
+  <article class="project" id="battlebot"><div class="project-copy"><h3>BattleBot</h3><p class="project-subtitle">Robot with swappable armor</p><button id="battlebot-action" type="button">Explore</button></div></article>
+  <article class="project" id="cryptscan"><div class="project-copy"><h3>CryptScan</h3><p class="project-subtitle">Distance sensing</p><button id="cryptscan-action" type="button">Explore</button></div></article>
+</main>
+<footer><button id="analytics-settings" type="button" hidden>Analytics settings</button></footer>
+<aside id="analytics-consent" aria-live="polite" aria-label="Analytics privacy choices" hidden>
+  <p>Allow Google Analytics to measure site visits and project interactions?</p>
+  <button id="analytics-accept" type="button">Allow</button>
+  <button id="analytics-decline" type="button">Decline</button>
+</aside>
