@@ -1,4 +1,4 @@
-import { spawn } from 'node:child_process';
+import { execFileSync, spawn } from 'node:child_process';
 import { setTimeout as delay } from 'node:timers/promises';
 import { mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
@@ -40,21 +40,57 @@ try {
   const chromePath = process.env.CHROME_BIN || (process.platform === 'darwin'
     ? '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
     : 'google-chrome');
+  let chromeVersion = 'unavailable';
+  try {
+    chromeVersion = execFileSync(chromePath, ['--version'], { encoding: 'utf8', timeout: 10000 }).trim();
+  } catch (error) {
+    chromeVersion = `unavailable (${error.code || error.message})`;
+  }
+  console.log(`Chrome binary: ${chromePath}`);
+  console.log(`Chrome version: ${chromeVersion}`);
   chrome = spawn(chromePath, [
     '--headless=new', '--disable-dev-shm-usage', '--enable-webgl',
     '--enable-unsafe-swiftshader', '--remote-allow-origins=*',
     `--remote-debugging-port=${debugPort}`, `--user-data-dir=${profile}`, 'about:blank'
-  ], { stdio: 'ignore' });
+  ], { stdio: ['ignore', 'pipe', 'pipe'] });
   let chromeError;
+  let chromeStdout = '';
+  let chromeStderr = '';
+  let endpointState = 'not checked';
+  chrome.stdout.on('data', chunk => { chromeStdout = (chromeStdout + chunk.toString()).slice(-4000); });
+  chrome.stderr.on('data', chunk => { chromeStderr = (chromeStderr + chunk.toString()).slice(-4000); });
   chrome.once('error', error => { chromeError = error; });
-  const target = await waitFor('headless Chrome', async () => {
-    if (chromeError) throw chromeError;
-    if (chrome.exitCode !== null) throw new Error(`Chrome exited with code ${chrome.exitCode}`);
-    try {
-      const response = await fetch(`http://${host}:${debugPort}/json/list`);
-      return (await response.json()).find(page => page.type === 'page');
-    } catch { return false; }
-  });
+  const diagnostics = () => `path=${chromePath}; version=${chromeVersion}; exitCode=${chrome.exitCode}; signalCode=${chrome.signalCode}; endpoint=${endpointState}; stdout=${chromeStdout.trim() || '(empty)'}; stderr=${chromeStderr.trim() || '(empty)'}`;
+  let target;
+  try {
+    target = await waitFor('headless Chrome', async () => {
+      if (chromeError) throw new Error(`Failed to spawn Chrome: ${chromeError.message}`);
+      if (chrome.exitCode !== null || chrome.signalCode !== null) {
+        throw new Error('Chrome exited before the remote-debugging endpoint was ready');
+      }
+      let response;
+      try {
+        response = await fetch(`http://${host}:${debugPort}/json/list`);
+      } catch (error) {
+        endpointState = `request failed (${error.message})`;
+        return false;
+      }
+      endpointState = `reachable, HTTP ${response.status}`;
+      if (!response.ok) return false;
+      let pages;
+      try {
+        pages = await response.json();
+      } catch (error) {
+        endpointState += `, invalid JSON (${error.message})`;
+        return false;
+      }
+      const target = pages.find(page => page.type === 'page');
+      endpointState += `, page targets=${pages.filter(page => page.type === 'page').length}`;
+      return target;
+    });
+  } catch (error) {
+    throw new Error(`${error.message}; ${diagnostics()}`);
+  }
 
   socket = new WebSocket(target.webSocketDebuggerUrl);
   await new Promise((resolve, reject) => {
