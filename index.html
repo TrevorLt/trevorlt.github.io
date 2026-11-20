@@ -4,6 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <meta name="theme-color" content="#111111">
+  <meta name="ga4-measurement-id" content="G-HDK5QBDER1">
   <title>Trevor Lin</title>
   <meta name="description" content="Trevor Lin studies computer engineering and is pursuing a Robotics Certificate at Northwestern University, with a focus on mechatronics and robotics.">
   <link rel="canonical" href="https://trevorlt.github.io/">
@@ -15,10 +16,11 @@
   <link rel="preload" href="assets/anton.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans.ttf" as="font" type="font/ttf" crossorigin>
   <link rel="preload" href="assets/work-sans-semibold.ttf" as="font" type="font/ttf" crossorigin>
-  <link rel="stylesheet" href="styles.css?v=20261117-linkedin-header-v1">
+  <link rel="stylesheet" href="styles.css?v=20261119-ga4-consent-v1">
   <link rel="stylesheet" href="assets/tech-text.bundle.css?v=20261103-reactbits-v2">
   <script id="model-viewer-loader" type="module" src="https://ajax.googleapis.com/ajax/libs/model-viewer/4.4.0/model-viewer.min.js"></script>
   <script src="script.js?v=20261115-mobile-touch-copy-v1" defer></script>
+  <script src="analytics.js?v=20261119-ga4-consent-v1" defer></script>
   <script src="assets/tech-text.bundle.js?v=20261115-mobile-touch-copy-v1" defer></script>
   <noscript><style>.scanner-stage canvas,.scanner-stage .scan-controls,.codex-demo .demo-styles,.codex-demo .demo-scenarios{display:none}.scanner-stage .scan-fallback{display:block}</style></noscript>
 </head>
@@ -26,7 +28,7 @@
 <a class="skip" href="#work">Skip to work</a>
 <header class="header">
   <a class="wordmark" href="#home" aria-label="Trevor Lin, home">Trevor Lin</a>
-  <nav aria-label="Main"><a href="#work">Work</a><a href="#about">About</a><a href="https://github.com/TrevorLt">GitHub</a><a href="https://www.linkedin.com/in/trevor-l1n">LinkedIn</a></nav>
+  <nav aria-label="Main"><a href="#work">Work</a><a href="#about">About</a><a id="nav-github" href="https://github.com/TrevorLt">GitHub</a><a id="nav-linkedin" href="https://www.linkedin.com/in/trevor-l1n">LinkedIn</a></nav>
 </header>
 <main>
   <section class="hero" id="home" aria-labelledby="name">
@@ -45,7 +47,7 @@
         <p class="project-subtitle">Combat robot with swappable armor</p>
         <p>An Antweight vertical spinner with replaceable 3D-printed ABS armor, designed for quick swaps between matches or after damage. A 2206 brushless motor (22 mm diameter × 6 mm stator) drives the weapon; two brushed motors drive the rear wheels.</p>
         <dl class="project-facts"><div><dt>Class</dt><dd>Antweight</dd></div><div><dt>Weapon</dt><dd>Vertical spinner</dd></div><div><dt>Armor</dt><dd>Replaceable ABS</dd></div><div><dt>Platform</dt><dd>Onshape</dd></div></dl>
-        <a class="project-link" href="https://cad.onshape.com/documents/bdc75ecbf621cda3da9ebd5b/w/fc0be3140bfd8cab092efe52/e/fe9df441b8d8cb29e966e12a" target="_blank" rel="noopener noreferrer">Open full CAD in Onshape <span aria-hidden="true">↗</span></a>
+        <a id="battlebot-cad" class="project-link" href="https://cad.onshape.com/documents/bdc75ecbf621cda3da9ebd5b/w/fc0be3140bfd8cab092efe52/e/fe9df441b8d8cb29e966e12a" target="_blank" rel="noopener noreferrer">Open full CAD in Onshape <span aria-hidden="true">↗</span></a>
       </div>
       <div class="battlebot-stage" aria-label="Interactive BattleBot 3D model">
         <div class="battlebot-stage-head"><span>DRIVETRAIN PREVIEW</span><span>Drag to rotate · Scroll to zoom</span></div>
@@ -64,7 +66,7 @@
         <p class="project-subtitle">Hand-cranked generator · 2.72 V peak at 25 Hz</p>
         <p>Our team designed and assembled this generator from custom 3D-printed and laser-cut parts. Eight N52 magnets (10 × 5 × 40 mm) spin past eight stationary copper coils, each wound with 60 turns of 0.6 mm wire. A 3:1 gear pair drives the rotor from the hand crank.</p>
         <dl class="project-facts"><div><dt>Test report</dt><dd>0.49 A peak, 1.33 W peak, 5.6 Ω internal resistance</dd></div><div><dt>Rotor</dt><dd>8 N52 magnets</dd></div><div><dt>Stator</dt><dd>8 × 60-turn coils</dd></div><div><dt>Drive</dt><dd>3:1 hand crank</dd></div></dl>
-        <a class="project-link" href="https://cad.onshape.com/documents/00c556d90785a9dc82e9c061/w/4a3bde9415cc6add804a8796/e/6e7e1c93375c04b86cba874c" target="_blank" rel="noopener noreferrer">Open full CAD in Onshape <span aria-hidden="true">↗</span></a>
+        <a id="generator-cad" class="project-link" href="https://cad.onshape.com/documents/00c556d90785a9dc82e9c061/w/4a3bde9415cc6add804a8796/e/6e7e1c93375c04b86cba874c" target="_blank" rel="noopener noreferrer">Open full CAD in Onshape <span aria-hidden="true">↗</span></a>
       </div>
       <div class="generator-stage" id="generator-stage" data-view="rotor" aria-label="Interactive three-phase AC generator preview">
         <div class="generator-stage-head">
@@ -237,10 +239,10 @@
       <div class="project-copy">
         <h3 id="codex-title" translate="no"><span class="visually-hidden">Codex Usage Status</span><span class="tech-heading-mount" data-tech-text="Codex Usage Status" aria-hidden="true">Codex Usage Status</span></h3>
         <p class="project-subtitle">Codex usage limits in the macOS menu bar.</p>
-        <p>I led product direction, interface iteration, and release validation for an independent continuation of <a href="https://github.com/tollenceld/codex-usage-status">an open-source macOS app</a>. My work includes adaptive refreshing and clearer low-usage warnings.</p>
+        <p>I led product direction, interface iteration, and release validation for an independent continuation of <a id="codex-upstream" href="https://github.com/tollenceld/codex-usage-status">an open-source macOS app</a>. My work includes adaptive refreshing and clearer low-usage warnings.</p>
         <dl class="project-facts"><div><dt>Focus</dt><dd>Interface & release iteration</dd></div><div><dt>Stage</dt><dd>Released</dd></div><div><dt>Platform</dt><dd>macOS</dd></div></dl>
-        <a class="project-link" href="https://github.com/TrevorLt/codex-usage-status">View on GitHub <span aria-hidden="true">↗</span></a>
-        <details id="contribution-details"><summary aria-controls="contribution-detail-content">My contribution</summary><div class="project-detail" id="contribution-detail-content"><p><strong>Adaptive refreshing:</strong> Activity-aware 30/60/120-second intervals balance timely readings with fewer unnecessary requests.</p><p><strong>User-centered interface:</strong> Native menu-bar contrast, targeted low-usage warnings, and clear data-freshness indicators keep status readable and unobtrusive.</p><p><strong>App delivery:</strong> Custom branding, Retina-ready installers, and launch-at-login support create a cohesive macOS app experience.</p><p>I led product direction, AI-assisted iteration, and release validation for this independent continuation of <a href="https://github.com/tollenceld/codex-usage-status">tollenceld/codex-usage-status</a>.</p><a href="https://github.com/TrevorLt/codex-usage-status/releases">Browse releases</a></div></details>
+        <a id="codex-github" class="project-link" href="https://github.com/TrevorLt/codex-usage-status">View on GitHub <span aria-hidden="true">↗</span></a>
+        <details id="contribution-details"><summary aria-controls="contribution-detail-content">My contribution</summary><div class="project-detail" id="contribution-detail-content"><p><strong>Adaptive refreshing:</strong> Activity-aware 30/60/120-second intervals balance timely readings with fewer unnecessary requests.</p><p><strong>User-centered interface:</strong> Native menu-bar contrast, targeted low-usage warnings, and clear data-freshness indicators keep status readable and unobtrusive.</p><p><strong>App delivery:</strong> Custom branding, Retina-ready installers, and launch-at-login support create a cohesive macOS app experience.</p><p>I led product direction, AI-assisted iteration, and release validation for this independent continuation of <a id="codex-upstream-detail" href="https://github.com/tollenceld/codex-usage-status">tollenceld/codex-usage-status</a>.</p><a id="codex-releases" href="https://github.com/TrevorLt/codex-usage-status/releases">Browse releases</a></div></details>
       </div>
     </article>
   </section>
@@ -251,9 +253,13 @@
   </section>
 
   <section class="contact section" id="contact" aria-labelledby="contact-title">
-    <h2 id="contact-title"><span class="visually-hidden">Let’s compare notes.</span><span class="tech-heading-mount" data-tech-text="Let’s compare notes." aria-hidden="true">Let’s compare notes.</span></h2><div class="contact-row"><p>Building something in mechatronics<br>or robotics? I’d love to compare notes.</p><a class="button" href="https://github.com/TrevorLt">Find me on GitHub <span aria-hidden="true">↗</span></a></div>
+    <h2 id="contact-title"><span class="visually-hidden">Let’s compare notes.</span><span class="tech-heading-mount" data-tech-text="Let’s compare notes." aria-hidden="true">Let’s compare notes.</span></h2><div class="contact-row"><p>Building something in mechatronics<br>or robotics? I’d love to compare notes.</p><a id="contact-github" class="button" href="https://github.com/TrevorLt">Find me on GitHub <span aria-hidden="true">↗</span></a></div>
   </section>
 </main>
-<footer><a class="footer-name" href="#home" aria-label="Back to top">Trevor Lin</a><div class="footer-bottom"><span>Made with curiosity.</span><a href="https://github.com/TrevorLt/trevorlt.github.io">Website source</a><span>© 2026 Trevor Lin</span></div><p class="photo-credit">Pico 2 photo: <a href="https://commons.wikimedia.org/w/index.php?curid=169801139">Profpcde, Wikimedia Commons</a> · <a href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>.</p></footer>
+<footer><a class="footer-name" href="#home" aria-label="Back to top">Trevor Lin</a><div class="footer-bottom"><span>Made with curiosity.</span><a id="website-source" href="https://github.com/TrevorLt/trevorlt.github.io">Website source</a><button id="analytics-settings" class="analytics-settings" type="button" hidden>Analytics settings</button><span>© 2026 Trevor Lin</span></div><p class="photo-credit">Pico 2 photo: <a id="pico-photo-source" href="https://commons.wikimedia.org/w/index.php?curid=169801139">Profpcde, Wikimedia Commons</a> · <a id="cc0-license" href="https://creativecommons.org/publicdomain/zero/1.0/">CC0</a>.</p></footer>
+<aside id="analytics-consent" class="analytics-consent" aria-live="polite" aria-label="Analytics privacy choices" hidden>
+  <p>Allow Google Analytics to measure site visits and project interactions?</p>
+  <div class="analytics-consent-actions"><button id="analytics-accept" type="button">Allow</button><button id="analytics-decline" type="button">Decline</button></div>
+</aside>
 </body>
 </html>

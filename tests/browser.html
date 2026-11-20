@@ -42,6 +42,7 @@ function greenScanPixels() {
   return count;
 }
 try {
+  localStorage.removeItem('portfolio-analytics-consent:G-HDK5QBDER1');
   await load('../?sweep=360');
   check($('#sweep').value === '0' && $('#scan-angle').textContent === '0% scanned' &&
     frame.contentWindow.eval('scanObjectCloud.filter(point => point.captureTime <= scanProgress).length') === 0,
@@ -49,6 +50,68 @@ try {
   await load();
   check($('#demo-status').textContent === 'Two windows. One glance.',
     'Default quota status matches the initial page copy');
+  check($('meta[name="ga4-measurement-id"]').content === 'G-HDK5QBDER1' && !$('#analytics-consent').hidden && !$('#analytics-settings').hidden
+    && !frame.contentWindow.dataLayer && !frame.contentWindow.gtag
+    && !frame.contentDocument.querySelector('script[src*="googletagmanager.com/gtag/js"]'),
+    'Production Measurement ID shows consent without loading Google Analytics or queueing events');
+  check([...frame.contentDocument.querySelectorAll('a[href^="https://"]')].every(link => Boolean(link.id)),
+    'Outbound links have stable IDs for Enhanced Measurement click reports');
+  const analyticsFrame = document.createElement('iframe');
+  analyticsFrame.title = 'Mock analytics consent flow';
+  analyticsFrame.style.cssText = 'position:absolute;left:-10000px;top:0;width:800px;height:700px;border:0';
+  const loadAnalyticsFixture = url => new Promise(resolve => {
+    analyticsFrame.addEventListener('load', resolve, { once: true });
+    analyticsFrame.src = url;
+  });
+  document.body.append(analyticsFrame);
+  await loadAnalyticsFixture('./analytics-fixture.html?reset=1&quota=low#codex');
+  let analyticsDocument = analyticsFrame.contentDocument;
+  let analyticsWindow = analyticsFrame.contentWindow;
+  let analyticsBanner = analyticsDocument.querySelector('#analytics-consent');
+  const analyticsConsentKey = 'portfolio-analytics-consent:G-TEST123456';
+  check(!analyticsBanner.hidden && !analyticsWindow.gtag && analyticsWindow.__gaTagRequests.length === 0,
+    'Configured Measurement ID shows consent without loading Google Analytics');
+  analyticsDocument.querySelector('#analytics-decline').click();
+  check(analyticsBanner.hidden && analyticsWindow.localStorage.getItem(analyticsConsentKey) === 'denied'
+    && !analyticsWindow.dataLayer && analyticsWindow.__gaTagRequests.length === 0
+    && analyticsDocument.activeElement.id === 'analytics-settings',
+    'Declining analytics persists without sending and returns focus to its settings control');
+  await loadAnalyticsFixture('./analytics-fixture.html?quota=low#codex');
+  analyticsDocument = analyticsFrame.contentDocument;
+  analyticsWindow = analyticsFrame.contentWindow;
+  analyticsBanner = analyticsDocument.querySelector('#analytics-consent');
+  check(analyticsBanner.hidden && !analyticsWindow.gtag && analyticsWindow.__gaTagRequests.length === 0,
+    'Saved decline remains disabled after reload');
+  analyticsDocument.querySelector('#analytics-settings').click();
+  analyticsDocument.querySelector('#analytics-accept').click();
+  const analyticsCalls = () => Array.from(analyticsWindow.dataLayer || [], call => Array.from(call));
+  const pageViews = () => analyticsCalls().filter(call => call[0] === 'event' && call[1] === 'page_view');
+  const analyticsConfig = analyticsCalls().find(call => call[0] === 'config' && call[1] === 'G-TEST123456');
+  const expectedPageLocation = analyticsWindow.location.origin + analyticsWindow.location.pathname;
+  check(analyticsWindow.__gaTagRequests.length === 1 && analyticsWindow.__gaTagRequests[0].includes('id=G-TEST123456')
+    && analyticsConfig?.[2]?.send_page_view === false && pageViews().length === 1
+    && pageViews()[0][2].page_location === expectedPageLocation
+    && analyticsDocument.activeElement.id === 'analytics-settings',
+    'Accepting loads one Google tag, sends one normalized page view, and returns focus');
+  analyticsWindow.history.replaceState({}, '', '?display=readout#battlebot');
+  check(pageViews().length === 1, 'UI history changes do not create manual page views');
+  await until(() => analyticsCalls().some(call => call[0] === 'event' && call[1] === 'project_view'
+    && call[2]?.project_id === 'battlebot'));
+  check(analyticsCalls().filter(call => call[0] === 'event' && call[1] === 'project_view'
+    && call[2]?.project_id === 'battlebot').length === 1,
+    'Project title and subtitle exposure records once after one continuous second');
+  analyticsDocument.querySelector('#battlebot-action').click();
+  analyticsDocument.querySelector('#battlebot-action').click();
+  check(analyticsCalls().filter(call => call[0] === 'event' && call[1] === 'project_explore'
+    && call[2]?.project_id === 'battlebot').length === 1,
+    'First project interaction is recorded once per project');
+  analyticsDocument.querySelector('#analytics-settings').click();
+  analyticsDocument.querySelector('#analytics-decline').click();
+  analyticsDocument.querySelector('#cryptscan-action').click();
+  check(analyticsWindow[`ga-disable-G-TEST123456`] === true && !analyticsCalls().some(call =>
+    call[0] === 'event' && call[1] === 'project_explore' && call[2]?.project_id === 'cryptscan'),
+    'Withdrawing consent disables subsequent project events');
+  analyticsFrame.remove();
   const scanSlider = $('#sweep');
   check($('.scanner-stage .stage-top').textContent.trim() === '0% scanned' &&
     getComputedStyle($('.scanner-stage .stage-top')).justifyContent === 'flex-end',
@@ -878,6 +941,15 @@ try {
   }
   check(restoredDesktopFonts.length === heroTextHosts.length && restoredDesktopFonts.every(hasRenderedHeroFont),
     'Hero text keeps its original CSS size when resizing desktop → mobile → desktop without reload');
+  frame.style.width = '320px';
+  await until(() => frame.contentWindow.innerWidth === 320);
+  const mobileConsentRule = [...frame.contentDocument.styleSheets].flatMap(sheet => [...sheet.cssRules])
+    .find(rule => rule.type === frame.contentWindow.CSSRule.MEDIA_RULE && rule.media.mediaText.includes('600px')
+      && rule.cssText.includes('.analytics-consent'));
+  const consentBottom = Number.parseFloat(frame.contentWindow.getComputedStyle($('#analytics-consent')).bottom);
+  check(mobileConsentRule?.cssText.includes('env(safe-area-inset-bottom') && Number.isFinite(consentBottom) && consentBottom >= 10,
+    'Narrow consent bar stays above the home-indicator safe area');
+  frame.style.width = previousFrameWidth;
   document.title = 'PASS — Portfolio regression checks';
   results.textContent = checks.join('\n');
 } catch (error) {
